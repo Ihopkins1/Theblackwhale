@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Item Editor — The Black Whale</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <video class="background-video" autoplay loop muted playsinline>
+    <source src="background.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="storepage.html">
+        <img class="site-logo" src="../BlackWhale.webp" alt="The Black Whale logo">
+        <span>The Black Whale</span>
+      </a>
+      <nav class="site-nav">
+        <a href="inventory.html">Inventory</a>
+        <a href="seller.html">Seller</a>
+        <a href="login.html">Login</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <section class="panel form-card">
+        <div>
+          <h1 class="section-title">Item Editor</h1>
+          <p class="section-copy">Edit an existing product or create a new listing with a clean form layout.</p>
+        </div>
+        <div class="form-group">
+          <label for="title">Product title</label>
+          <input id="title" type="text" placeholder="Enter product name">
+        </div>
+        <div class="form-group">
+          <label for="sku">SKU</label>
+          <input id="sku" type="text" placeholder="e.g. BW-002">
+        </div>
+        <div class="input-row">
+          <div class="form-group">
+            <label for="price">Price</label>
+            <input id="price" type="text" placeholder="$0.00">
+          </div>
+          <div class="form-group">
+            <label for="stock">Stock</label>
+            <input id="stock" type="number" placeholder="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea id="description" placeholder="Describe the product..."></textarea>
+        </div>
+        <div class="button-row">
+          <button class="button button-primary" type="submit">Save product</button>
+          <button class="button button-secondary" type="button">Cancel</button>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+</body>
+</html>
