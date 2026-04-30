@@ -35,29 +35,27 @@ body {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: 120vw;
-  height: 120vh;
+  min-width: 110%;
+  min-height: 110%;
+  width: auto;
+  height: auto;
   object-fit: cover;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0.98);
+  will-change: transform;
+  backface-visibility: hidden;
   z-index: -1;
-  animation: background-drift 24s ease-in-out infinite;
+  animation: background-drift 40s ease-in-out infinite both;
 }
 
 @keyframes background-drift {
   0%, 100% {
-    transform: translate(-50%, -50%) scale(1);
+    transform: translate(-50%, -50%) scale(0.98);
   }
-  20% {
-    transform: translate(-62%, -54%) scale(1.05);
+  33% {
+    transform: translate(-51%, -49%) scale(1);
   }
-  40% {
-    transform: translate(-40%, -46%) scale(1.08);
-  }
-  60% {
-    transform: translate(-55%, -58%) scale(1.04);
-  }
-  80% {
-    transform: translate(-50%, -50%) scale(1.02);
+  66% {
+    transform: translate(-49%, -51%) scale(0.99);
   }
 }
 
@@ -90,8 +88,11 @@ textarea {
 }
 
 .site-header {
-  background: rgba(15, 23, 42, 0.94);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(180deg, #000000 0%, rgba(16, 16, 16, 0.98) 65%, rgba(20, 20, 20, 0.9) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(14px);
   padding: 1rem 1.5rem;
   position: sticky;
@@ -138,12 +139,15 @@ textarea {
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.08);
   color: var(--text);
-  transition: transform 0.18s ease, background 0.18s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .site-nav a:hover {
   background: rgba(56, 189, 248, 0.2);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(56, 189, 248, 0.2),
+              0 0 12px rgba(56, 189, 248, 0.3);
+  text-decoration: none;
 }
 
 .page-shell {
@@ -161,11 +165,26 @@ textarea {
   padding: 2rem 1.5rem;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.featured {
+  margin: 3rem 0;
+}
+
 .section-title {
   margin: 0 0 1rem;
   font-size: clamp(1.75rem, 2.3vw, 2.75rem);
   letter-spacing: -0.03em;
   opacity: 0.86;
+  background: linear-gradient(135deg, #f8fafc 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .section-copy {
@@ -178,6 +197,18 @@ textarea {
   display: grid;
   gap: 1.25rem;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .card {
@@ -185,6 +216,52 @@ textarea {
   border: 1px solid rgba(148, 163, 184, 0.1);
   border-radius: 1.1rem;
   padding: 1.3rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.1), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.card:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 12px 32px rgba(56, 189, 248, 0.15),
+              0 0 30px rgba(56, 189, 248, 0.1),
+              inset 0 1px 0 rgba(56, 189, 248, 0.1);
+  transform: translateY(-4px);
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-image {
+  width: 100%;
+  height: 160px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(148, 163, 184, 0.05));
+  border-radius: 0.8rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.product-card:hover .card-image {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(148, 163, 184, 0.08));
 }
 
 .card h2 {
@@ -192,10 +269,33 @@ textarea {
   font-size: 1.05rem;
 }
 
+.card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: #f8fafc;
+}
+
 .card p {
   margin: 0;
   color: var(--muted);
   line-height: 1.7;
+}
+
+.product-price {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 0.5rem !important;
+}
+
+.product-desc {
+  font-size: 0.95rem;
+  margin-bottom: 1rem !important;
+}
+
+.product-card .button {
+  margin-top: auto;
+  width: 100%;
 }
 
 .form-card {
@@ -251,7 +351,9 @@ textarea {
   border-radius: 999px;
   padding: 0.92rem 1.5rem;
   font-weight: 600;
-  transition: transform 0.18s ease, background 0.18s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .button-primary {
@@ -260,15 +362,47 @@ textarea {
   box-shadow: 0 12px 24px rgba(14, 165, 233, 0.24);
 }
 
+.button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(14, 165, 233, 0.4), 
+              0 0 20px rgba(14, 165, 233, 0.6),
+              inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.button-primary:active {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(14, 165, 233, 0.3), 
+              0 0 15px rgba(14, 165, 233, 0.5);
+}
+
 .button-secondary {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
   border: 1px solid rgba(148, 163, 184, 0.18);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.button-secondary:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(56, 189, 248, 0.2),
+              0 0 15px rgba(56, 189, 248, 0.3);
+}
+
+.button-secondary:active {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(56, 189, 248, 0.15);
 }
 
 .button:hover,
 .btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+}
+
+.btn-small {
+  padding: 0.65rem 1.2rem;
+  font-size: 0.95rem;
 }
 
 .table-wrap {
@@ -304,14 +438,14 @@ textarea {
   gap: 0.35rem;
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
-  background: rgba(56, 189, 248, 0.16);
+  background: rgba(3, 28, 39, 0.16);
   color: #bae6fd;
   font-size: 0.87rem;
 }
 
 .alert {
   border-left: 4px solid var(--accent);
-  background: rgba(56, 189, 248, 0.08);
+  background: rgba(0, 9, 12, 0.08);
   padding: 1rem 1.2rem;
   border-radius: 0.95rem;
   color: var(--text);
@@ -340,4 +474,59 @@ textarea {
   .page-shell {
     margin: 1rem auto 1.5rem;
   }
+}
+
+.page-transition-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: #000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.42s ease, visibility 0.42s ease;
+  z-index: 1000;
+}
+
+.page-transition-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.page-transition-overlay img {
+  width: min(18vw, 180px);
+  max-width: 180px;
+  min-width: 110px;
+  height: auto;
+  object-fit: contain;
+  filter: brightness(1.1);
+}
+
+body.transitioning .page-transition-overlay {
+  opacity: 1;
+  visibility: visible;
+}
+
+body.transitioning .background-video,
+body.transitioning .page-frame,
+body.transitioning .site-header,
+body.transitioning .site-footer,
+body.transitioning .page-shell,
+body.transitioning .site-nav a,
+body.transitioning .site-brand,
+body.transitioning .section-title,
+body.transitioning .section-copy,
+body.transitioning .panel,
+body.transitioning .card {
+  filter: grayscale(1) brightness(0.6);
+  transition: filter 0.35s ease;
+}
+
+body.transitioning .site-nav a {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body.transitioning .site-logo {
+  filter: grayscale(1) brightness(0.6);
 }
