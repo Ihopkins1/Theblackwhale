@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Basic Cart Demo</title>
+	<link rel="stylesheet" href="styles/cart.css">
+</head>
+<body>
+	<main class="layout">
+		<section class="panel">
+			<h1>Items</h1>
+			<p class="subtitle">Click any button to add an item to your cart.</p>
+			<div id="productGrid" class="products"></div>
+		</section>
+
+		<aside class="panel">
+			<h2>Cart</h2>
+			<ul id="cartList" class="cart-list"></ul>
+			<p id="emptyState" class="empty">Your cart is empty.</p>
+
+			<div class="totals">
+				<div class="row">
+					<span>Total Items</span>
+					<strong id="totalItems">0</strong>
+				</div>
+				<div class="row">
+					<span>Total Price</span>
+					<strong id="totalPrice">$0.00</strong>
+				</div>
+			</div>
+
+			<button id="checkoutBtn" class="checkout-btn" type="button">Checkout</button>
+			<button id="clearCartBtn" class="clear-btn" type="button">Clear Cart</button>
+		</aside>
+	</main>
+
+	<div id="checkoutModal" class="modal" aria-hidden="true">
+		<div class="modal-content">
+			<div id="checkoutChoiceView">
+				<h3>Checkout Options</h3>
+				<p class="modal-copy">You are not logged in. Choose how you want to continue.</p>
+				<div class="modal-actions stacked">
+					<button id="chooseSignInBtn" class="secondary-btn" type="button">Sign In</button>
+					<button id="chooseGuestBtn" class="add-btn" type="button">Guest Checkout</button>
+					<button id="cancelCheckoutBtn" class="clear-btn" type="button">Cancel</button>
+				</div>
+			</div>
+
+			<div id="guestCheckoutView" style="display: none;">
+				<h3>Guest Checkout</h3>
+				<p class="modal-copy">Enter card info and at least one contact method.</p>
+				<label for="guestEmail">Email</label>
+				<input id="guestEmail" class="field" type="email" placeholder="name@example.com">
+				<label for="guestPhone">Phone</label>
+				<input id="guestPhone" class="field" type="tel" placeholder="5551234567">
+				<label for="guestCard">Card Number</label>
+				<input id="guestCard" class="field" type="text" inputmode="numeric" placeholder="4242424242424242">
+				<div class="modal-actions">
+					<button id="backToOptionsBtn" class="secondary-btn" type="button">Back</button>
+					<button id="placeGuestOrderBtn" class="add-btn" type="button">Place Order</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="app.config.js"></script>
+	<script src="function.js"></script>
+</body>
+</html>

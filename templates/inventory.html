@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Marketplace</title>
+  <link rel="stylesheet" href="../styles/inventory.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Inventory Marketplace</h1>
+    <p>Buy and sell items like eBay or Amazon</p>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="browse">Browse Items</button>
+      <button class="tab-btn" data-tab="history">Purchase History</button>
+      <button class="tab-btn" data-tab="stats">Inventory Stats</button>
+    </div>
+
+    <div class="tab-content active" data-content="browse">
+      <div class="controls">
+        <div class="control-group">
+          <label for="searchInput">Search</label>
+          <input type="text" id="searchInput" placeholder="Search by name, description...">
+        </div>
+        <div class="control-group">
+          <label for="categoryFilter">Category</label>
+          <select id="categoryFilter">
+            <option value="all">All Categories</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Office">Office</option>
+            <option value="Accessories">Accessories</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="sortFilter">Sort By</label>
+          <select id="sortFilter">
+            <option value="name">Name (A-Z)</option>
+            <option value="price-low">Price (Low to High)</option>
+            <option value="price-high">Price (High to Low)</option>
+            <option value="rating">Rating</option>
+            <option value="quantity">Quantity</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="maxPrice">Max Price: <span id="priceValue">$1000</span></label>
+          <input type="range" id="maxPrice" min="0" max="1000" step="10" value="1000">
+        </div>
+      </div>
+
+      <div id="alertContainer"></div>
+      <div id="inventoryGrid" class="inventory-grid"></div>
+    </div>
+
+    <div class="tab-content" data-content="history">
+      <div style="margin-bottom: 12px; text-align: right;">
+        <button id="clearHistoryBtn" class="btn-cancel" type="button">Clear Purchase History</button>
+      </div>
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+            <th>Buyer</th>
+            <th>Seller</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="purchaseHistory"></tbody>
+      </table>
+    </div>
+
+    <div class="tab-content" data-content="stats">
+      <div id="statsContainer" class="stats"></div>
+    </div>
+  </div>
+
+  <div id="purchaseModal" class="modal">
+    <div class="modal-content">
+      <h2>Complete Purchase</h2>
+      <div class="form-group">
+        <label for="itemName">Item</label>
+        <input type="text" id="itemName" readonly>
+      </div>
+      <div class="form-group">
+        <label for="itemPrice">Price per Unit</label>
+        <input type="text" id="itemPrice" readonly>
+      </div>
+      <div class="form-group">
+        <label for="quantityInput">Quantity</label>
+        <input type="number" id="quantityInput" min="1" value="1">
+      </div>
+      <div class="form-group">
+        <label for="buyerName">Your Name</label>
+        <input type="text" id="buyerName" placeholder="Enter your name">
+      </div>
+      <div class="form-group">
+        <label>Total: <strong id="totalPrice">$0.00</strong></label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="add-btn" onclick="confirmPurchase()">Buy Now</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../app.config.js"></script>
+  <script src="../inventory.js"></script>
+  <script>
+    let selectedItemId = null;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await initializeInventory();
+      renderInventory("inventoryGrid");
+      renderPurchaseHistory("purchaseHistory");
+      await renderStats();
+      setupEventListeners();
+      setupBuyButtons();
+    });
+
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tab = btn.getAttribute("data-tab");
+        document.querySelectorAll(".tab-btn").forEach((button) => button.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach((content) => content.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelector(`[data-content="${tab}"]`).classList.add("active");
+      });
+    });
+
+    function setupEventListeners() {
+      document.getElementById("searchInput").addEventListener("input", (event) => {
+        const term = event.target.value;
+        const results = searchItems(term);
+        renderInventory("inventoryGrid", results);
+        setupBuyButtons();
+      });
+
+      document.getElementById("categoryFilter").addEventListener("change", (event) => {
+        setCurrentFilter({ category: event.target.value });
+        renderInventory("inventoryGrid");
+        setupBuyButtons();
+      });
+
+      document.getElementById("sortFilter").addEventListener("change", (event) => {
+        setCurrentSort(event.target.value);
+        renderInventory("inventoryGrid");
+        setupBuyButtons();
+      });
+
+      document.getElementById("maxPrice").addEventListener("input", (event) => {
+        document.getElementById("priceValue").textContent = "$" + event.target.value;
+        setCurrentFilter({ maxPrice: Number(event.target.value) });
+        renderInventory("inventoryGrid");
+        setupBuyButtons();
+      });
+
+      document.getElementById("quantityInput").addEventListener("input", updateTotal);
+
+      const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+      if (clearHistoryBtn) {
+        clearHistoryBtn.addEventListener("click", async () => {
+          await clearPurchaseHistory();
+          renderPurchaseHistory("purchaseHistory");
+          await renderStats();
+          showAlert("Purchase history cleared", "success");
+        });
+      }
+    }
+
+    function setupBuyButtons() {
+      document.querySelectorAll(".buy-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          const itemId = Number(button.getAttribute("data-item-id"));
+          openPurchaseModal(itemId);
+        });
+      });
+    }
+
+    function openPurchaseModal(itemId) {
+      const item = getItemById(itemId);
+      if (!item) {
+        return;
+      }
+
+      selectedItemId = itemId;
+      document.getElementById("itemName").value = item.name;
+      document.getElementById("itemPrice").value = formatPrice(item.price);
+      document.getElementById("quantityInput").value = 1;
+      document.getElementById("buyerName").value = "";
+      updateTotal();
+      document.getElementById("purchaseModal").classList.add("active");
+    }
+
+    function closeModal() {
+      document.getElementById("purchaseModal").classList.remove("active");
+    }
+
+    function updateTotal() {
+      const item = getItemById(selectedItemId);
+      if (!item) {
+        return;
+      }
+
+      const qty = Number(document.getElementById("quantityInput").value) || 1;
+      document.getElementById("totalPrice").textContent = formatPrice(item.price * qty);
+    }
+
+    async function confirmPurchase() {
+      const item = getItemById(selectedItemId);
+      const quantity = Number(document.getElementById("quantityInput").value) || 1;
+      const buyerName = document.getElementById("buyerName").value.trim();
+
+      if (!item) {
+        showAlert("Item not found", "error");
+        return;
+      }
+
+      if (!buyerName) {
+        showAlert("Please enter your name", "error");
+        return;
+      }
+
+      if (quantity <= 0) {
+        showAlert("Quantity must be at least 1", "error");
+        return;
+      }
+
+      if (quantity > item.quantity) {
+        showAlert(`Only ${item.quantity} items available`, "error");
+        return;
+      }
+
+      try {
+        const purchase = await purchaseItem(selectedItemId, quantity, buyerName);
+        if (!purchase) {
+          showAlert("Purchase failed", "error");
+          return;
+        }
+
+        showAlert("Item added to cart. Complete checkout in Cart.", "success");
+        closeModal();
+        renderInventory("inventoryGrid");
+        await renderStats();
+        setupBuyButtons();
+      } catch (error) {
+        showAlert("Purchase failed. Try again.", "error");
+      }
+    }
+
+    function showAlert(message, type) {
+      const container = document.getElementById("alertContainer");
+      const alert = document.createElement("div");
+      alert.className = `alert ${type}`;
+      alert.textContent = message;
+      container.appendChild(alert);
+      setTimeout(() => {
+        alert.remove();
+      }, 5000);
+    }
+
+    async function renderStats() {
+      const stats = await getInventoryStats();
+      const container = document.getElementById("statsContainer");
+      container.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Unique Items</div>
+          <div class="stat-value">${stats.totalUniqueItems}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total in Stock</div>
+          <div class="stat-value">${stats.totalItemsInStock}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Inventory Value</div>
+          <div class="stat-value">${formatPrice(stats.inventoryValue)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Average Price</div>
+          <div class="stat-value">${formatPrice(stats.averagePrice)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Sales</div>
+          <div class="stat-value">${stats.totalSales}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-value">${formatPrice(stats.totalRevenue)}</div>
+        </div>
+      `;
+    }
+
+    document.getElementById("purchaseModal").addEventListener("click", (event) => {
+      if (event.target.id === "purchaseModal") {
+        closeModal();
+      }
+    });
+  </script>
+</body>
+</html>
