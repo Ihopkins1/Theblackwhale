@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory — The Black Whale</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <video class="background-video" autoplay loop muted playsinline preload="auto">
+    <source src="whalebackground.mp4" type="video/mp4">
+  </video>
+  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="storepage.html">
+        <img class="site-logo" src="newblackwhale.png" alt="The Black Whale logo">
+        <span>The Black Whale</span>
+      </a>
+      <nav class="site-nav">
+        <a href="seller.html">Seller</a>
+        <a href="itemeditor.html">Item editor</a>
+        <a href="admin.html">Admin</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <section class="panel">
+        <div>
+          <h1 class="section-title">Inventory</h1>
+          <p class="section-copy">Browse the product catalog, review stock levels, and prepare updates for the next batch of items.</p>
+        </div>
+      </section>
+      <section class="panel table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>SKU</th>
+              <th>Stock</th>
+              <th>Price</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Example item</td>
+              <td>BW-001</td>
+              <td>24</td>
+              <td>$34.00</td>
+              <td><span class="badge">In stock</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+  <div class="page-transition-overlay active">
+    <img src="newblackwhale.png" alt="The Black Whale logo">
+  </div>
+  <script>
+    (function() {
+      const overlay = document.querySelector('.page-transition-overlay');
+      const internalLinks = Array.from(document.querySelectorAll('a[href]')).filter(link => {
+        const href = link.getAttribute('href');
+        return href && href.endsWith('.html') && !href.startsWith('http') && !href.startsWith('#');
+      });
+
+      const navigate = (href) => {
+        document.body.classList.add('transitioning');
+        overlay.classList.add('active');
+        setTimeout(() => { window.location.href = href; }, 420);
+      };
+
+      internalLinks.forEach(link => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          navigate(link.getAttribute('href'));
+        });
+      });
+
+      window.addEventListener('pageshow', () => {
+        document.body.classList.remove('transitioning');
+        overlay.classList.remove('active');
+      });
+    })();
+  </script>
+</body>
+</html>
