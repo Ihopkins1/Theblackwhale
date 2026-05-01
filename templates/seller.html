@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Dashboard — The Black Whale</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>  <video class="background-video" autoplay loop muted playsinline preload="auto">
+    <source src="whalebackground.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="storepage.html">
+        <img class="site-logo" src="newblackwhale.png" alt="The Black Whale logo">
+        <span>The Black Whale</span>
+      </a>
+      <nav class="site-nav">
+        <a href="inventory.html">Inventory</a>
+        <a href="itemeditor.html">Item editor</a>
+        <a href="login.html">Login</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <section class="panel hero">
+        <div>
+          <h1 class="section-title">Seller Dashboard</h1>
+          <p class="section-copy">Review orders, add new products, and keep your store catalog up to date with intuitive controls.</p>
+        </div>
+      </section>
+      <section class="grid">
+        <article class="card">
+          <h2>Active listings</h2>
+          <p>Showcase the items currently available in your store.</p>
+        </article>
+        <article class="card">
+          <h2>Recent orders</h2>
+          <p>See the latest activity and fulfillment status for your orders.</p>
+        </article>
+      </section>
+    </main>
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+  <div class="page-transition-overlay active">
+    <img src="newblackwhale.png" alt="The Black Whale logo">
+  </div>
+  <script>
+    (function() {
+      const overlay = document.querySelector('.page-transition-overlay');
+      const internalLinks = Array.from(document.querySelectorAll('a[href]')).filter(link => {
+        const href = link.getAttribute('href');
+        return href && href.endsWith('.html') && !href.startsWith('http') && !href.startsWith('#');
+      });
+
+      const navigate = (href) => {
+        document.body.classList.add('transitioning');
+        overlay.classList.add('active');
+        setTimeout(() => { window.location.href = href; }, 420);
+      };
+
+      internalLinks.forEach(link => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          navigate(link.getAttribute('href'));
+        });
+      });
+
+      window.addEventListener('pageshow', () => {
+        document.body.classList.remove('transitioning');
+        overlay.classList.remove('active');
+      });
+    })();
+  </script>
+</body>
+</html>
