@@ -304,6 +304,11 @@ textarea {
   max-width: 600px;
 }
 
+.form-card-stretched {
+  max-width: none;
+  width: 100%;
+}
+
 .form-group {
   display: grid;
   gap: 0.55rem;
@@ -403,6 +408,23 @@ textarea {
 .btn-small {
   padding: 0.65rem 1.2rem;
   font-size: 0.95rem;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.75rem;
+  min-height: 1.5rem;
+  display: none;
+  align-items: center;
+}
+
+.error-message.show {
+  display: flex;
 }
 
 .table-wrap {
