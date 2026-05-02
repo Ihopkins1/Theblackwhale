@@ -33,14 +33,13 @@ body {
 
 .background-video {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  min-width: 145%;
-  min-height: 145%;
-  width: auto;
-  height: auto;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   object-fit: cover;
-  transform: translate(-30%, -50%) scale(1.02);
+  object-position: right center;
+  transform: none;
   will-change: transform;
   backface-visibility: hidden;
   z-index: -2;
@@ -49,13 +48,13 @@ body {
 
 @keyframes background-drift {
   0%, 100% {
-    transform: translate(-30%, -50%) scale(1.02);
+    transform: none;
   }
   33% {
-    transform: translate(-31%, -49%) scale(1.04);
+    transform: none;
   }
   66% {
-    transform: translate(-29%, -51%) scale(1.03);
+    transform: none;
   }
 }
 
