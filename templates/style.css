@@ -35,27 +35,27 @@ body {
   position: fixed;
   top: 50%;
   left: 50%;
-  min-width: 110%;
-  min-height: 110%;
+  min-width: 145%;
+  min-height: 145%;
   width: auto;
   height: auto;
   object-fit: cover;
-  transform: translate(-50%, -50%) scale(0.98);
+  transform: translate(-30%, -50%) scale(1.02);
   will-change: transform;
   backface-visibility: hidden;
-  z-index: -1;
+  z-index: -2;
   animation: background-drift 40s ease-in-out infinite both;
 }
 
 @keyframes background-drift {
   0%, 100% {
-    transform: translate(-50%, -50%) scale(0.98);
+    transform: translate(-30%, -50%) scale(1.02);
   }
   33% {
-    transform: translate(-51%, -49%) scale(1);
+    transform: translate(-31%, -49%) scale(1.04);
   }
   66% {
-    transform: translate(-49%, -51%) scale(0.99);
+    transform: translate(-29%, -51%) scale(1.03);
   }
 }
 
@@ -494,11 +494,12 @@ textarea {
   visibility: visible;
 }
 
-.page-transition-overlay img {
-  width: min(18vw, 180px);
-  max-width: 180px;
-  min-width: 110px;
+.page-transition-overlay img,
+.page-transition-overlay video {
+  width: min(90vw, 860px);
+  max-width: 860px;
   height: auto;
+  max-height: 85vh;
   object-fit: contain;
   filter: brightness(1.1);
 }
