@@ -1,8 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+<<<<<<< Updated upstream
+=======
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce_db.db'
 app.secret_key = 'your_secret_key_here'
 db = SQLAlchemy(app)
@@ -260,6 +264,10 @@ def index():
 def login():
     return render_template('login.html')
 
+@app.route('/sign-in')
+def sign_in():
+    return render_template('sign-in.html')
+
 @app.route('/admin')
 def admin():
     return render_template('admin.html')
@@ -272,8 +280,107 @@ def seller():
 def inventory():
     return render_template('inventory.html')
 
+@app.route('/itemeditor')
+def itemeditor():
+    return render_template('itemeditor.html')
+
+# Authentication Routes
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+        name = data.get('name', email.split('@')[0])  # Default name from email
+        
+        # Validation
+        if not email or not password:
+            return jsonify({'success': False, 'message': 'Email and password are required'}), 400
+        
+        if password != confirm_password:
+            return jsonify({'success': False, 'message': 'Passwords do not match'}), 400
+        
+        if len(password) < 6:
+            return jsonify({'success': False, 'message': 'Password must be at least 6 characters'}), 400
+        
+        # Check if user exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return jsonify({'success': False, 'message': 'Email already registered'}), 400
+        
+        # Create new user with default role 'customer'
+        hashed_password = generate_password_hash(password)
+        username = email.split('@')[0]  # Use email prefix as username
+        
+        # Ensure unique username
+        counter = 1
+        original_username = username
+        while User.query.filter_by(username=username).first():
+            username = f"{original_username}{counter}"
+            counter += 1
+        
+        new_user = User(
+            name=name,
+            email=email,
+            username=username,
+            password=hashed_password,
+            role='customer'
+        )
+        
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            
+            # Log the user in
+            session['user_id'] = new_user.user_id
+            session['username'] = new_user.username
+            session['role'] = new_user.role
+            
+            return jsonify({'success': True, 'message': 'Account created successfully', 'redirect': url_for('index')}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': f'Error creating account: {str(e)}'}), 500
+    
+    return render_template('CreateAccount.html')
+
+@app.route('/login_post', methods=['POST'])
+def login_post():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    
+    if not email or not password:
+        return jsonify({'success': False, 'message': 'Email and password are required'}), 400
+    
+    user = User.query.filter_by(email=email).first()
+    
+    if user and check_password_hash(user.password, password):
+        # Login successful
+        session['user_id'] = user.user_id
+        session['username'] = user.username
+        session['role'] = user.role
+        
+        # Redirect based on role
+        if user.role == 'admin':
+            redirect_url = url_for('admin')
+        elif user.role == 'vendor':
+            redirect_url = url_for('inventory')
+        else:
+            redirect_url = url_for('index')
+        
+        return jsonify({'success': True, 'message': 'Login successful', 'redirect': redirect_url}), 200
+    else:
+        return jsonify({'success': False, 'message': 'Invalid email or password'}), 401
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
     
+>>>>>>> Stashed changes
