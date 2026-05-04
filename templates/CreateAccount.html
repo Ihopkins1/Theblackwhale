@@ -45,7 +45,7 @@
                 </div>
                 <div class="button-row">
                   <button type="submit" class="button button-primary">Create Account</button>
-                  <button type="button" class="button button-secondary" onclick="goToLogin()">Back to Login</button>
+                  <a href="/templates/sign-in.html" class="button button-secondary">Back to Login</a>
                 </div>
             </form>
         </section>
@@ -108,8 +108,17 @@
       });
 
       function goToLogin() {
-        window.location.href = '/login';
+        window.location.href = '/sign-in';
       }
+
+      (function() {
+        const overlay = document.querySelector('.page-transition-overlay');
+
+        window.addEventListener('pageshow', () => {
+          document.body.classList.remove('transitioning');
+          overlay.classList.remove('active');
+        });
+      })();
     </script>
 
     <style>
@@ -133,37 +142,5 @@
       }
     </style>
 </body>
-</html>
-</body>
-<script>
-function validateForm() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const confirmPassword = document.getElementById('confirm-password').value.trim();
-    const errorMessage = document.getElementById('error-message');
-    
-    errorMessage.textContent = '';
-    errorMessage.classList.remove('show');
-    
-    // Check if any field is empty
-    if (!email || !password || !confirmPassword) {
-        errorMessage.textContent = 'All fields are required. Please fill in all the fields.';
-        errorMessage.classList.add('show');
-        return false;
-    }
-    
-    // Email validation part
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        errorMessage.textContent = 'Please enter a valid email address.';
-        errorMessage.classList.add('show');
-        return false;
-    }
-    
-    // If validation passes, your account will be successfully created 
-    alert('Account created successfully!');
-    return false;
-}
-</script>
 </html>
  
