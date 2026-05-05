@@ -4,166 +4,182 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Create Account — The Black Whale</title>
+  <script src="/static/app-routing.js"></script>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <video class="background-video" autoplay loop muted playsinline preload="auto">
-        <source src="/static/whalebackground.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-    <div class="page-frame">
-        <header class="site-header">
-        <a class="site-brand" href="/">
-            <img class="site-logo" src="/static/newblackwhale.png" alt="The Black Whale logo">
-            <span>The Black Whale</span>
-        </a>
-        <nav class="site-nav">
-            <a href="/">Store</a>
-            <a href="/inventory">Inventory</a>
-            <a href="/seller">Seller</a>
-        </nav>
-        </header>
-        <main class="page-shell">
-        <section class="panel form-card">
-            <div>
-            <h1 class="section-title">Create Account</h1>
-            <p class="section-copy">Sign up to manage inventory, view seller dashboards, or access admin controls.</p>
-            </div>
-            <div id="error-message" class="error-message" style="display: none;"></div>
-            <form id="createAccountForm">
-                <div class="form-group">
-                <label for="email">Email address</label>
-                <input id="email" type="email" placeholder="Enter your email" required>
-                </div>
-                <div class="form-group">
-                <label for="password">Password</label>
-                <input id="password" type="password" placeholder="Enter your password" required>
-                </div>
-                <div class="form-group">
-                <label for="confirm-password">Confirm Password</label>
-                <input id="confirm-password" type="password" placeholder="Confirm your password" required>
-                </div>
-                <div class="button-row">
-                  <button type="submit" class="button button-primary">Create Account</button>
-                  <button type="button" class="button button-secondary" onclick="goToLogin()">Back to Login</button>
-                </div>
-            </form>
-        </section>
-        </main>
-        <footer class="site-footer">© 2026 The Black Whale</footer>
-    </div>
-    <div class="page-transition-overlay active">
-      <img src="/static/newblackwhale.png" alt="The Black Whale logo">
-    </div>
+  <video class="background-video" autoplay loop muted playsinline preload="auto">
+    <source src="/static/whalebackground.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="/">
+        <img class="site-logo" src="/static/newblackwhale.png" alt="The Black Whale logo">
+        <span>The Black Whale</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/">Store</a>
+        <a href="/inventory">Inventory</a>
+        <a href="/seller">Seller</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <section class="panel form-card">
+        <div>
+          <h1 class="section-title">Create Account</h1>
+          <p class="section-copy">Sign up to manage inventory, view seller dashboards, or access admin controls.</p>
+        </div>
+        <div id="error-message" class="error-message" style="display: none;"></div>
+        <form id="createAccountForm">
+          <div class="form-group">
+            <label for="email">Email address</label>
+            <input id="email" type="email" placeholder="Enter your email" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="Enter your password" required>
+          </div>
+          <div class="form-group">
+            <label for="confirm-password">Confirm Password</label>
+            <input id="confirm-password" type="password" placeholder="Confirm your password" required>
+          </div>
+          <div class="form-group">
+            <label for="account-type">Account Type</label>
+            <select id="account-type" required>
+              <option value="user" selected>User</option>
+              <option value="seller">Seller</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-group" id="admin-key-group" style="display: none;">
+            <label for="admin-key">Admin Credential</label>
+            <input id="admin-key" type="password" placeholder="Enter admin credential">
+          </div>
+          <div class="button-row">
+            <button type="submit" class="button button-primary">Create Account</button>
+            <a id="backToSignInLink" href="/sign-in" class="button button-secondary">Back to Login</a>
+          </div>
+        </form>
+      </section>
+    </main>
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+  <div class="page-transition-overlay active">
+    <img src="/static/newblackwhale.png" alt="The Black Whale logo">
+  </div>
 
-    <script>
-      document.getElementById('createAccountForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirm-password').value;
-        const errorMessage = document.getElementById('error-message');
-        
-        // Client-side validation
-        if (password.length < 6) {
-          errorMessage.textContent = 'Password must be at least 6 characters';
+  <script>
+    document.getElementById('backToSignInLink').setAttribute('href', appUrl('/sign-in'));
+
+    document.getElementById('createAccountForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const accountType = document.getElementById('account-type').value;
+      const adminKey = document.getElementById('admin-key').value;
+      const errorMessage = document.getElementById('error-message');
+
+      if (password.length < 6) {
+        errorMessage.textContent = 'Password must be at least 6 characters';
+        errorMessage.style.display = 'block';
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        errorMessage.textContent = 'Passwords do not match';
+        errorMessage.style.display = 'block';
+        return;
+      }
+
+      if (accountType === 'admin' && !adminKey.trim()) {
+        errorMessage.textContent = 'Admin credential is required for admin accounts';
+        errorMessage.style.display = 'block';
+        return;
+      }
+
+      try {
+        const response = await fetch(appUrl('/register'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password,
+            confirm_password: confirmPassword,
+            account_type: accountType,
+            admin_key: adminKey
+          })
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+        let data = null;
+
+        if (contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const textResponse = await response.text();
+          throw new Error(textResponse || `Request failed with status ${response.status}`);
+        }
+
+        if (!response.ok || !data.success) {
+          errorMessage.textContent = data.message || 'Unable to create account. Please try again.';
           errorMessage.style.display = 'block';
           return;
         }
-        
-        if (password !== confirmPassword) {
-          errorMessage.textContent = 'Passwords do not match';
-          errorMessage.style.display = 'block';
-          return;
-        }
-        
-        try {
-          const response = await fetch('/register', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              email: email,
-              password: password,
-              confirm_password: confirmPassword
-            })
-          });
-          
-          const data = await response.json();
-          
-          if (data.success) {
-            errorMessage.style.display = 'none';
-            // Redirect to home page or dashboard
-            window.location.href = data.redirect;
-          } else {
-            errorMessage.textContent = data.message;
-            errorMessage.style.display = 'block';
-          }
-        } catch (error) {
-          errorMessage.textContent = 'An error occurred. Please try again.';
-          errorMessage.style.display = 'block';
-        }
+
+        errorMessage.style.display = 'none';
+        window.location.href = appUrl(data.redirect);
+      } catch (error) {
+        errorMessage.textContent = error.message || 'An error occurred. Please try again.';
+        errorMessage.style.display = 'block';
+      }
+    });
+
+    const accountTypeElement = document.getElementById('account-type');
+    const adminKeyGroup = document.getElementById('admin-key-group');
+    const adminKeyInput = document.getElementById('admin-key');
+
+    accountTypeElement.addEventListener('change', function () {
+      const isAdmin = this.value === 'admin';
+      adminKeyGroup.style.display = isAdmin ? 'block' : 'none';
+      adminKeyInput.required = isAdmin;
+      if (!isAdmin) {
+        adminKeyInput.value = '';
+      }
+    });
+
+    (function () {
+      const overlay = document.querySelector('.page-transition-overlay');
+      window.addEventListener('pageshow', () => {
+        document.body.classList.remove('transitioning');
+        overlay.classList.remove('active');
       });
+    })();
+  </script>
 
-      function goToLogin() {
-        window.location.href = '/login';
-      }
-    </script>
+  <style>
+    .error-message {
+      color: #d32f2f;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #d32f2f;
+      border-radius: 4px;
+      background-color: #ffebee;
+    }
 
-    <style>
-      .error-message {
-        color: #d32f2f;
-        padding: 10px;
-        margin: 10px 0;
-        border: 1px solid #d32f2f;
-        border-radius: 4px;
-        background-color: #ffebee;
-      }
-      
-      .button-row {
-        display: flex;
-        gap: 10px;
-        margin-top: 20px;
-      }
-      
-      .button {
-        flex: 1;
-      }
-    </style>
+    .button-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .button {
+      flex: 1;
+    }
+  </style>
 </body>
 </html>
-</body>
-<script>
-function validateForm() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const confirmPassword = document.getElementById('confirm-password').value.trim();
-    const errorMessage = document.getElementById('error-message');
-    
-    errorMessage.textContent = '';
-    errorMessage.classList.remove('show');
-    
-    // Check if any field is empty
-    if (!email || !password || !confirmPassword) {
-        errorMessage.textContent = 'All fields are required. Please fill in all the fields.';
-        errorMessage.classList.add('show');
-        return false;
-    }
-    
-    // Email validation part
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        errorMessage.textContent = 'Please enter a valid email address.';
-        errorMessage.classList.add('show');
-        return false;
-    }
-    
-    // If validation passes, your account will be successfully created 
-    alert('Account created successfully!');
-    return false;
-}
-</script>
-</html>
- 

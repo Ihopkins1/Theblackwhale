@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,6 +8,13 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce_db.db'
 app.secret_key = 'your_secret_key_here'
 db = SQLAlchemy(app)
+
+ADMIN_SIGNUP_KEY = 'blackwhale'
+ROLE_MAP = {
+    'user': 'customer',
+    'seller': 'vendor',
+    'admin': 'admin'
+}
 
 # Users table
 class User(db.Model):
@@ -292,6 +297,8 @@ def register():
         email = data.get('email')
         password = data.get('password')
         confirm_password = data.get('confirm_password')
+        selected_role = str(data.get('account_type', 'user')).strip().lower()
+        admin_key = str(data.get('admin_key', '')).strip().lower()
         name = data.get('name', email.split('@')[0])  # Default name from email
         
         # Validation
@@ -303,15 +310,22 @@ def register():
         
         if len(password) < 6:
             return jsonify({'success': False, 'message': 'Password must be at least 6 characters'}), 400
+
+        if selected_role not in ROLE_MAP:
+            return jsonify({'success': False, 'message': 'Invalid account type selected'}), 400
+
+        if selected_role == 'admin' and admin_key != ADMIN_SIGNUP_KEY:
+            return jsonify({'success': False, 'message': 'Invalid admin credential'}), 403
         
         # Check if user exists
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             return jsonify({'success': False, 'message': 'Email already registered'}), 400
         
-        # Create new user with default role 'customer'
+        # Create new user with selected role
         hashed_password = generate_password_hash(password)
         username = email.split('@')[0]  # Use email prefix as username
+        db_role = ROLE_MAP[selected_role]
         
         # Ensure unique username
         counter = 1
@@ -325,7 +339,7 @@ def register():
             email=email,
             username=username,
             password=hashed_password,
-            role='customer'
+            role=db_role
         )
         
         try:
@@ -336,8 +350,15 @@ def register():
             session['user_id'] = new_user.user_id
             session['username'] = new_user.username
             session['role'] = new_user.role
-            
-            return jsonify({'success': True, 'message': 'Account created successfully', 'redirect': url_for('index')}), 201
+
+            if new_user.role == 'admin':
+                redirect_url = url_for('admin')
+            elif new_user.role == 'vendor':
+                redirect_url = url_for('seller')
+            else:
+                redirect_url = url_for('index')
+
+            return jsonify({'success': True, 'message': 'Account created successfully', 'redirect': redirect_url}), 201
         except Exception as e:
             db.session.rollback()
             return jsonify({'success': False, 'message': f'Error creating account: {str(e)}'}), 500
@@ -365,7 +386,7 @@ def login_post():
         if user.role == 'admin':
             redirect_url = url_for('admin')
         elif user.role == 'vendor':
-            redirect_url = url_for('inventory')
+            redirect_url = url_for('seller')
         else:
             redirect_url = url_for('index')
         
@@ -382,5 +403,3 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-    
->>>>>>> Stashed changes

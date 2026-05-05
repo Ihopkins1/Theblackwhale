@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign In — The Black Whale</title>
+  <script src="/static/app-routing.js"></script>
   <link rel="stylesheet" href="/static/style.css">
   <style>
     * {
@@ -40,7 +41,6 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.5);
       z-index: -1;
     }
 
@@ -456,8 +456,8 @@
       spinner.style.display = 'block';
 
       try {
-        const response = await fetch('/login_post', {
-          method: 'POST',
+        const response = await fetch(appUrl('/login_post'), {
+            method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
@@ -481,7 +481,7 @@
 
           // Redirect after brief delay
           setTimeout(() => {
-            window.location.href = data.redirect;
+            window.location.href = appUrl(data.redirect);
           }, 500);
         } else {
           showError(data.message || 'Sign in failed. Please try again.');

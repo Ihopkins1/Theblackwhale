@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login — The Black Whale</title>
+  <script src="/static/app-routing.js"></script>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -37,7 +38,7 @@
           </div>
           <div class="form-group">
             <label for="password">Password</label>
-            <input id="password" type="password" placeholder="••••••••" required>
+            <input id="password" type="password" placeholder="********" required>
           </div>
           <div class="button-row">
             <button class="button button-primary" type="submit">Sign in</button>
@@ -49,19 +50,19 @@
     <footer class="site-footer">© 2026 The Black Whale</footer>
   </div>
   <div class="page-transition-overlay active">
-    <img src="newblackwhale.png" alt="The Black Whale logo">
+    <img src="/static/newblackwhale.png" alt="The Black Whale logo">
   </div>
 
   <script>
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
       e.preventDefault();
-      
+
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       const errorMessage = document.getElementById('error-message');
-      
+
       try {
-        const response = await fetch('/login_post', {
+        const response = await fetch(appUrl('/login_post'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -71,13 +72,12 @@
             password: password
           })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
           errorMessage.style.display = 'none';
-          // Redirect to the appropriate page
-          window.location.href = data.redirect;
+          window.location.href = appUrl(data.redirect);
         } else {
           errorMessage.textContent = data.message;
           errorMessage.style.display = 'block';
@@ -89,8 +89,17 @@
     });
 
     function goToCreateAccount() {
-      window.location.href = '/register';
+      window.location.href = appUrl('/register');
     }
+
+    (function () {
+      const overlay = document.querySelector('.page-transition-overlay');
+
+      window.addEventListener('pageshow', () => {
+        document.body.classList.remove('transitioning');
+        overlay.classList.remove('active');
+      });
+    })();
   </script>
 
   <style>
@@ -103,34 +112,5 @@
       background-color: #ffebee;
     }
   </style>
-</body>
-</html>
-  <script>
-    (function() {
-      const overlay = document.querySelector('.page-transition-overlay');
-      const internalLinks = Array.from(document.querySelectorAll('a[href]')).filter(link => {
-        const href = link.getAttribute('href');
-        return href && href.endsWith('.html') && !href.startsWith('http') && !href.startsWith('#');
-      });
-
-      const navigate = (href) => {
-        document.body.classList.add('transitioning');
-        overlay.classList.add('active');
-        setTimeout(() => { window.location.href = href; }, 420);
-      };
-
-      internalLinks.forEach(link => {
-        link.addEventListener('click', (event) => {
-          event.preventDefault();
-          navigate(link.getAttribute('href'));
-        });
-      });
-
-      window.addEventListener('pageshow', () => {
-        document.body.classList.remove('transitioning');
-        overlay.classList.remove('active');
-      });
-    })();
-  </script>
 </body>
 </html>
