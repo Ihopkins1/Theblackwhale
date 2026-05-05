@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign In — The Black Whale</title>
-  <script src="/static/app-routing.js"></script>
-  <link rel="stylesheet" href="/static/style.css">
+  <script src="../static/app-routing.js"></script>
+  <script>if (typeof appUrl === 'undefined') { window.appUrl = function(p) { return p || ''; }; }</script>
+  <link rel="stylesheet" href="../static/style.css">
   <style>
     * {
       margin: 0;
@@ -343,13 +344,13 @@
 </head>
 <body>
   <video class="background-video" autoplay loop muted playsinline preload="auto">
-    <source src="/static/whalebackground.mp4" type="video/mp4">
+    <source src="../static/whalebackground.mp4" type="video/mp4">
   </video>
   <div class="background-overlay"></div>
 
   <div class="sign-in-container">
     <div class="logo-section">
-      <img src="/static/newblackwhale.png" alt="The Black Whale logo">
+      <img src="../static/newblackwhale.png" alt="The Black Whale logo">
       <h1>The Black Whale</h1>
       <p>Premium E-Commerce Platform</p>
     </div>

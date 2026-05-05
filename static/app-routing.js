@@ -5,7 +5,8 @@
     window.location.port === '3000';
   const isPreviewContext = isFileProtocol || isLocalPreviewHost;
   const defaultBackendBase = 'http://127.0.0.1:5000';
-  const configuredBackendBase = window.APP_BACKEND_BASE || localStorage.getItem('APP_BACKEND_BASE');
+  var configuredBackendBase = window.APP_BACKEND_BASE;
+  try { configuredBackendBase = configuredBackendBase || localStorage.getItem('APP_BACKEND_BASE'); } catch(e) {}
   const appBase = isPreviewContext ? (configuredBackendBase || defaultBackendBase) : '';
 
   function appUrl(path) {
