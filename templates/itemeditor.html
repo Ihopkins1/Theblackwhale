@@ -4,23 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Item Editor — The Black Whale</title>
-  <link rel="stylesheet" href="style.css">
+  <script src="/static/app-routing.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <video class="background-video" autoplay loop muted playsinline preload="auto">
-    <source src="whalebackground.mp4" type="video/mp4">
+    <source src="/static/whalebackground.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
   <div class="page-frame">
     <header class="site-header">
-      <a class="site-brand" href="storepage.html">
-        <img class="site-logo" src="newblackwhale.png" alt="The Black Whale logo">
+      <a class="site-brand" href="/">
+        <img class="site-logo" src="/static/newblackwhale.png" alt="The Black Whale logo">
         <span>The Black Whale</span>
       </a>
       <nav class="site-nav">
-        <a href="inventory.html">Inventory</a>
-        <a href="seller.html">Seller</a>
-        <a href="login.html">Login</a>
+        <a href="/inventory">Inventory</a>
+        <a href="/seller">Seller</a>
+        <a href="/logout">Logout</a>
       </nav>
     </header>
     <main class="page-shell">
@@ -60,7 +61,7 @@
     <footer class="site-footer">© 2026 The Black Whale</footer>
   </div>
   <div class="page-transition-overlay active">
-    <img src="newblackwhale.png" alt="The Black Whale logo">
+    <img src="/static/newblackwhale.png" alt="The Black Whale logo">
   </div>
   <script>
     (function() {
