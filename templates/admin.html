@@ -29,6 +29,40 @@
           <p class="section-copy">Manage users, review reports, and keep the store operations running smoothly from one central dashboard.</p>
         </div>
       </section>
+      <section class="panel admin-dashboard">
+        <div class="admin-grid">
+          <div class="admin-card">
+            <h3>Manage Users</h3>
+            <p>View, edit, and manage all user accounts and roles.</p>
+            <button class="admin-btn" onclick="navigateTo('/admin/users')">View Users</button>
+          </div>
+          <div class="admin-card">
+            <h3>View Complaints</h3>
+            <p>Review and resolve customer complaints and support tickets.</p>
+            <button class="admin-btn" onclick="navigateTo('/admin/complaints')">View Complaints</button>
+          </div>
+          <div class="admin-card">
+            <h3>Manage Orders</h3>
+            <p>Monitor and manage all orders across the platform.</p>
+            <button class="admin-btn" onclick="navigateTo('/admin/orders')">View Orders</button>
+          </div>
+          <div class="admin-card">
+            <h3>Manage Products</h3>
+            <p>Review and manage vendor products and inventory.</p>
+            <button class="admin-btn" onclick="navigateTo('/admin/products')">View Products</button>
+          </div>
+          <div class="admin-card">
+            <h3>Vendor Management</h3>
+            <p>Manage vendor accounts and vendor performance.</p>
+            <button class="admin-btn" onclick="navigateTo('/admin/vendors')">Manage Vendors</button>
+          </div>
+          <div class="admin-card">
+            <h3>Platform Reports</h3>
+            <p>View detailed analytics and reports about platform activity.</p>
+            <button class="admin-btn" onclick="navigateTo('/admin/reports')">View Reports</button>
+          </div>
+        </div>
+      </section>
     </main>
     <footer class="site-footer">© 2026 The Black Whale</footer>
   </div>
@@ -36,6 +70,13 @@
     <img src="../static/newblackwhale.png" alt="The Black Whale logo">
   </div>
   <script>
+    const navigateTo = (path) => {
+      document.body.classList.add('transitioning');
+      const overlay = document.querySelector('.page-transition-overlay');
+      overlay.classList.add('active');
+      setTimeout(() => { window.location.href = path; }, 420);
+    };
+
     (function() {
       const overlay = document.querySelector('.page-transition-overlay');
       const internalLinks = Array.from(document.querySelectorAll('a[href]')).filter(link => {

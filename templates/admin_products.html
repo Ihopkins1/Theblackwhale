@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Products — The Black Whale Admin</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>  <video class="background-video" autoplay loop muted playsinline preload="auto">
+    <source src="/static/whalebackground.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="/admin">
+        <img class="site-logo" src="/static/newblackwhale.png" alt="The Black Whale logo">
+        <span>The Black Whale Admin</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/inventory">Inventory</a>
+        <a href="/seller">Seller</a>
+        <a href="/logout">Logout</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <section class="panel hero">
+        <div>
+          <h1 class="section-title">Manage Products</h1>
+          <p class="section-copy">Review and manage all vendor products on the platform.</p>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Product ID</th>
+                <th>Title</th>
+                <th>Vendor</th>
+                <th>Inventory</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in products %}
+              <tr>
+                <td>#{{ product.product_id }}</td>
+                <td>{{ product.title }}</td>
+                <td>{{ product.vendor.name }}</td>
+                <td>{{ product.inventory }} units</td>
+                <td>{{ product.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                  <button class="btn btn-small button-secondary" onclick="viewProduct({{ product.product_id }})">View</button>
+                  <button class="btn btn-small button-secondary" onclick="editProduct({{ product.product_id }})">Edit</button>
+                  <button class="btn btn-small button-secondary" onclick="removeProduct({{ product.product_id }})">Remove</button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if not products %}
+        <p style="text-align: center; color: var(--muted); padding: 2rem;">No products at this time.</p>
+        {% endif %}
+      </section>
+    </main>
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+  <div class="page-transition-overlay active">
+    <img src="/static/newblackwhale.png" alt="The Black Whale logo">
+  </div>
+  <script>
+    const viewProduct = (productId) => {
+      alert('View product ' + productId + ' - Coming soon!');
+    };
+
+    const editProduct = (productId) => {
+      alert('Edit product ' + productId + ' - Coming soon!');
+    };
+
+    const removeProduct = (productId) => {
+      if (confirm('Are you sure you want to remove this product?')) {
+        alert('Remove product ' + productId + ' - Coming soon!');
+      }
+    };
+
+    (function() {
+      const overlay = document.querySelector('.page-transition-overlay');
+      const allLinks = Array.from(document.querySelectorAll('a[href]')).filter(link => {
+        const href = link.getAttribute('href');
+        return href && !href.startsWith('http') && !href.startsWith('#');
+      });
+
+      const navigate = (href) => {
+        document.body.classList.add('transitioning');
+        overlay.classList.add('active');
+        setTimeout(() => { window.location.href = href; }, 420);
+      };
+
+      allLinks.forEach(link => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          navigate(link.getAttribute('href'));
+        });
+      });
+
+      window.addEventListener('pageshow', () => {
+        document.body.classList.remove('transitioning');
+        overlay.classList.remove('active');
+      });
+
+      window.addEventListener('DOMContentLoaded', () => {
+        overlay.classList.remove('active');
+      });
+    })();
+  </script>
+</body>
+</html>

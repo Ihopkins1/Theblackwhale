@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Users — The Black Whale Admin</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>  <video class="background-video" autoplay loop muted playsinline preload="auto">
+    <source src="/static/whalebackground.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="/admin">
+        <img class="site-logo" src="/static/newblackwhale.png" alt="The Black Whale logo">
+        <span>The Black Whale Admin</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/inventory">Inventory</a>
+        <a href="/seller">Seller</a>
+        <a href="/logout">Logout</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <section class="panel hero">
+        <div>
+          <h1 class="section-title">Manage Users</h1>
+          <p class="section-copy">View and manage all registered users on the platform.</p>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+              <tr>
+                <td>#{{ user.user_id }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.username }}</td>
+                <td><span class="badge">{{ user.role }}</span></td>
+                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                  <button class="btn btn-small button-secondary" onclick="editUser({{ user.user_id }})">Edit</button>
+                  <button class="btn btn-small button-secondary" onclick="deleteUser({{ user.user_id }})">Delete</button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+  <div class="page-transition-overlay active">
+    <img src="/static/newblackwhale.png" alt="The Black Whale logo">
+  </div>
+  <script>
+    const navigateTo = (path) => {
+      document.body.classList.add('transitioning');
+      const overlay = document.querySelector('.page-transition-overlay');
+      overlay.classList.add('active');
+      setTimeout(() => { window.location.href = path; }, 420);
+    };
+
+    const editUser = (userId) => {
+      alert('Edit user ' + userId + ' - Coming soon!');
+    };
+
+    const deleteUser = (userId) => {
+      if (confirm('Are you sure you want to delete this user?')) {
+        alert('Delete user ' + userId + ' - Coming soon!');
+      }
+    };
+
+    (function() {
+      const overlay = document.querySelector('.page-transition-overlay');
+      const allLinks = Array.from(document.querySelectorAll('a[href]')).filter(link => {
+        const href = link.getAttribute('href');
+        return href && !href.startsWith('http') && !href.startsWith('#');
+      });
+
+      const navigate = (href) => {
+        document.body.classList.add('transitioning');
+        overlay.classList.add('active');
+        setTimeout(() => { window.location.href = href; }, 420);
+      };
+
+      allLinks.forEach(link => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          navigate(link.getAttribute('href'));
+        });
+      });
+
+      window.addEventListener('pageshow', () => {
+        document.body.classList.remove('transitioning');
+        overlay.classList.remove('active');
+      });
+
+      window.addEventListener('DOMContentLoaded', () => {
+        overlay.classList.remove('active');
+      });
+    })();
+  </script>
+</body>
+</html>

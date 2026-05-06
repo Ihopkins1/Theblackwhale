@@ -552,3 +552,94 @@ body.transitioning .site-nav a {
 body.transitioning .site-logo {
   filter: grayscale(1) brightness(0.6);
 }
+
+/* Admin Dashboard Styles */
+.admin-dashboard {
+  padding: 2rem 1.5rem;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.admin-card {
+  background: rgba(30, 41, 59, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 1.1rem;
+  padding: 1.8rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.1), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.admin-card:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 12px 32px rgba(56, 189, 248, 0.15),
+              0 0 30px rgba(56, 189, 248, 0.1),
+              inset 0 1px 0 rgba(56, 189, 248, 0.1);
+  transform: translateY(-6px);
+}
+
+.admin-card:hover::before {
+  opacity: 1;
+}
+
+.admin-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.3rem;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.admin-card p {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+  line-height: 1.7;
+  flex: 1;
+}
+
+.admin-btn {
+  background: var(--accent-strong);
+  color: #fff;
+  border: none;
+  border-radius: 0.85rem;
+  padding: 0.95rem 1.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  align-self: flex-start;
+  box-shadow: 0 12px 24px rgba(14, 165, 233, 0.24);
+}
+
+.admin-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(14, 165, 233, 0.4), 
+              0 0 20px rgba(14, 165, 233, 0.6),
+              inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.admin-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(14, 165, 233, 0.3), 
+              0 0 15px rgba(14, 165, 233, 0.5);
+}
+

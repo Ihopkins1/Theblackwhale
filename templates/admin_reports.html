@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Platform Reports — The Black Whale Admin</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>  <video class="background-video" autoplay loop muted playsinline preload="auto">
+    <source src="/static/whalebackground.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="/admin">
+        <img class="site-logo" src="/static/newblackwhale.png" alt="The Black Whale logo">
+        <span>The Black Whale Admin</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/inventory">Inventory</a>
+        <a href="/seller">Seller</a>
+        <a href="/logout">Logout</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <section class="panel hero">
+        <div>
+          <h1 class="section-title">Platform Reports</h1>
+          <p class="section-copy">View detailed analytics and statistics about your platform's performance.</p>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="admin-grid">
+          <div class="admin-card">
+            <h3>Total Users</h3>
+            <p style="font-size: 2.5rem; font-weight: 700; color: var(--accent); margin: 1rem 0;">{{ total_users }}</p>
+            <p>Registered users on the platform</p>
+          </div>
+          <div class="admin-card">
+            <h3>Total Orders</h3>
+            <p style="font-size: 2.5rem; font-weight: 700; color: var(--accent); margin: 1rem 0;">{{ total_orders }}</p>
+            <p>Total orders placed to date</p>
+          </div>
+          <div class="admin-card">
+            <h3>Products Listed</h3>
+            <p style="font-size: 2.5rem; font-weight: 700; color: var(--accent); margin: 1rem 0;">{{ total_products }}</p>
+            <p>Active products on platform</p>
+          </div>
+          <div class="admin-card">
+            <h3>Total Revenue</h3>
+            <p style="font-size: 2.5rem; font-weight: 700; color: var(--accent); margin: 1rem 0;">${{ "%.2f"|format(total_revenue|float) }}</p>
+            <p>Total platform revenue</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top: 2rem;">
+        <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem;">Quick Actions</h2>
+        <div class="admin-grid">
+          <div class="admin-card">
+            <h3>User Insights</h3>
+            <p>View detailed user demographics and activity patterns.</p>
+            <button class="admin-btn" onclick="viewInsights('users')">View Users Insights</button>
+          </div>
+          <div class="admin-card">
+            <h3>Sales Analytics</h3>
+            <p>Analyze sales trends and revenue patterns.</p>
+            <button class="admin-btn" onclick="viewInsights('sales')">View Sales Analytics</button>
+          </div>
+          <div class="admin-card">
+            <h3>Vendor Performance</h3>
+            <p>Monitor top-performing vendors and ratings.</p>
+            <button class="admin-btn" onclick="viewInsights('vendors')">View Vendor Performance</button>
+          </div>
+          <div class="admin-card">
+            <h3>Export Reports</h3>
+            <p>Download detailed reports in CSV or PDF format.</p>
+            <button class="admin-btn" onclick="viewInsights('export')">Export Reports</button>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+  <div class="page-transition-overlay active">
+    <img src="/static/newblackwhale.png" alt="The Black Whale logo">
+  </div>
+  <script>
+    const viewInsights = (type) => {
+      alert('View ' + type + ' insights - Coming soon!');
+    };
+
+    (function() {
+      const overlay = document.querySelector('.page-transition-overlay');
+      const allLinks = Array.from(document.querySelectorAll('a[href]')).filter(link => {
+        const href = link.getAttribute('href');
+        return href && !href.startsWith('http') && !href.startsWith('#');
+      });
+
+      const navigate = (href) => {
+        document.body.classList.add('transitioning');
+        overlay.classList.add('active');
+        setTimeout(() => { window.location.href = href; }, 420);
+      };
+
+      allLinks.forEach(link => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          navigate(link.getAttribute('href'));
+        });
+      });
+
+      window.addEventListener('pageshow', () => {
+        document.body.classList.remove('transitioning');
+        overlay.classList.remove('active');
+      });
+
+      window.addEventListener('DOMContentLoaded', () => {
+        overlay.classList.remove('active');
+      });
+    })();
+  </script>
+</body>
+</html>

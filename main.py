@@ -273,9 +273,6 @@ def login():
 def sign_in():
     return render_template('sign-in.html')
 
-@app.route('/admin')
-def admin():
-    return render_template('admin.html')
 
 @app.route('/seller')
 def seller():
@@ -398,6 +395,48 @@ def login_post():
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
+# Admin Routes
+@app.route('/admin')
+def admin():
+    return render_template('admin.html')
+
+@app.route('/admin/users')
+def admin_users():
+    users = User.query.all()
+    return render_template('admin_users.html', users=users)
+
+@app.route('/admin/complaints')
+def admin_complaints():
+    complaints = Complaint.query.all()
+    return render_template('admin_complaints.html', complaints=complaints)
+
+@app.route('/admin/orders')
+def admin_orders():
+    orders = Order.query.all()
+    return render_template('admin_orders.html', orders=orders)
+
+@app.route('/admin/products')
+def admin_products():
+    products = Product.query.all()
+    return render_template('admin_products.html', products=products)
+
+@app.route('/admin/vendors')
+def admin_vendors():
+    vendors = User.query.filter_by(role='vendor').all()
+    return render_template('admin_vendors.html', vendors=vendors)
+
+@app.route('/admin/reports')
+def admin_reports():
+    total_users = User.query.count()
+    total_orders = Order.query.count()
+    total_products = Product.query.count()
+    total_revenue = db.session.query(db.func.sum(Order.total_price)).scalar() or 0
+    return render_template('admin_reports.html', 
+                         total_users=total_users,
+                         total_orders=total_orders,
+                         total_products=total_products,
+                         total_revenue=total_revenue)
 
 if __name__ == '__main__':
     with app.app_context():
