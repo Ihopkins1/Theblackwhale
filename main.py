@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from functools import wraps
 import os
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -261,9 +262,32 @@ class Wishlist(db.Model):
         return f'<Wishlist {self.wishlist_id}>'
 
 # Routes
+def require_role(*allowed_roles):
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapped_view(*args, **kwargs):
+            if 'user_id' not in session:
+                return redirect(url_for('sign_in'))
+
+            current_role = session.get('role')
+            if current_role not in allowed_roles:
+                return redirect(url_for('index'))
+
+            return view_func(*args, **kwargs)
+
+        return wrapped_view
+
+    return decorator
+
+
 @app.route('/')
 def index():
     return render_template('storepage.html')
+
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
 
 @app.route('/login')
 def login():
@@ -274,20 +298,37 @@ def sign_in():
     return render_template('sign-in.html')
 
 @app.route('/admin')
+@require_role('admin')
 def admin():
     return render_template('admin.html')
 
 @app.route('/seller')
+@require_role('vendor')
 def seller():
     return render_template('seller.html')
 
 @app.route('/inventory')
+@require_role('admin')
 def inventory():
     return render_template('inventory.html')
 
 @app.route('/itemeditor')
+@require_role('vendor')
 def itemeditor():
     return render_template('itemeditor.html')
+
+
+@app.route('/session-info')
+def session_info():
+    role = session.get('role')
+    return jsonify({
+        'logged_in': 'user_id' in session,
+        'user_id': session.get('user_id'),
+        'username': session.get('username'),
+        'role': role,
+        'is_admin': role == 'admin',
+        'is_seller': role == 'vendor'
+    }), 200
 
 # Authentication Routes
 @app.route('/register', methods=['GET', 'POST'])

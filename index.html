@@ -113,12 +113,18 @@
   </style>
 </head>
 <body>
+  <script>
+    (function () {
+      const target = 'templates/storepage.html';
+      window.location.replace(target);
+    })();
+  </script>
   <main class="shell">
     <section class="hero">
       <img src="BlackWhale.webp" alt="The Black Whale logo">
       <div>
         <h1>The Black Whale</h1>
-        <p>Project landing page for GitHub Pages. Use the links below to open the main static pages.</p>
+        <p>Redirecting to the store page...</p>
       </div>
     </section>
 
@@ -129,7 +135,7 @@
       <a href="templates/inventory.html">Open Inventory</a>
       <a href="templates/seller.html">Open Seller Dashboard</a>
       <a href="templates/admin.html">Open Admin Dashboard</a>
-      <p class="hint"><strong>Note:</strong> account creation and sign-in API calls still require the Flask backend when using dynamic features.</p>
+      <p class="hint"><strong>Note:</strong> if you are not redirected automatically, use the Store Page link above.</p>
     </section>
   </main>
 </body>

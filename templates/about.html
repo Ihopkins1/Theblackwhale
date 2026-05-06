@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Black Whale — Base Template</title>
+  <title>About Us - The Black Whale</title>
   <script src="../static/app-routing.js"></script>
   <script src="../static/nav-auth.js" defer></script>
   <link rel="stylesheet" href="../static/style.css">
@@ -11,7 +11,6 @@
 <body>
   <video class="background-video" autoplay loop muted playsinline preload="auto">
     <source src="../static/whalebackground.mp4" type="video/mp4">
-    Your browser does not support the video tag.
   </video>
   <div class="page-frame">
     <header class="site-header">
@@ -20,19 +19,34 @@
         <span>The Black Whale</span>
       </a>
       <nav class="site-nav">
-        <a href="/">Store</a>
-        <a href="/inventory">Inventory</a>
-        <a href="/seller">Seller</a>
-        <a href="/admin">Admin</a>
-        <a href="/sign-in">Sign In</a>
+        <a href="/">Store Page</a>
+        <a href="/about">About Us</a>
       </nav>
     </header>
-    <main class="page-shell panel">
-      <h1 class="section-title"></h1>
-    
+
+    <main class="page-shell">
+      <section class="panel hero">
+        <div>
+          <h1 class="section-title">About Us</h1>
+          <p class="section-copy">The Black Whale is a student-built commerce platform focused on clean role-based workflows for customers, sellers, and admins.</p>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Our Mission</h2>
+          <p>Build a storefront that is simple for customers, productive for sellers, and controlled for administrators.</p>
+        </article>
+        <article class="card">
+          <h2>How We Work</h2>
+          <p>We iterate quickly, test role permissions in real workflows, and keep UX focused on clear navigation.</p>
+        </article>
+      </section>
     </main>
+
     <footer class="site-footer">© 2026 The Black Whale</footer>
   </div>
+
   <div class="page-transition-overlay active">
     <img src="../static/newblackwhale.png" alt="The Black Whale logo">
   </div>
@@ -59,10 +73,6 @@
 
       window.addEventListener('pageshow', () => {
         document.body.classList.remove('transitioning');
-        overlay.classList.remove('active');
-      });
-
-      window.addEventListener('DOMContentLoaded', () => {
         overlay.classList.remove('active');
       });
     })();
