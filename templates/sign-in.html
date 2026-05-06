@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign In — The Black Whale</title>
   <script src="../static/app-routing.js"></script>
+  <script src="../static/nav-auth.js" defer></script>
   <script>if (typeof appUrl === 'undefined') { window.appUrl = function(p) { return p || ''; }; }</script>
   <link rel="stylesheet" href="../static/style.css">
   <style>
@@ -136,6 +137,21 @@
 
     .form-group input::placeholder {
       color: #999;
+    }
+
+    .show-password-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #555;
+      cursor: pointer;
+    }
+
+    .show-password-toggle input[type="checkbox"] {
+      width: auto;
+      margin: 0;
     }
 
     .remember-forgot {
@@ -386,6 +402,10 @@
           required
           autocomplete="current-password"
         >
+        <label class="show-password-toggle" for="togglePassword">
+          <input type="checkbox" id="togglePassword">
+          Show password
+        </label>
       </div>
 
       <div class="remember-forgot">
@@ -516,6 +536,11 @@
 
     document.getElementById('password').addEventListener('focus', function() {
       document.getElementById('errorMessage').classList.remove('show');
+    });
+
+    document.getElementById('togglePassword').addEventListener('change', function() {
+      const passwordInput = document.getElementById('password');
+      passwordInput.type = this.checked ? 'text' : 'password';
     });
   </script>
 </body>

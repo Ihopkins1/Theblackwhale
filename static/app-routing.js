@@ -58,6 +58,37 @@
 
   window.appUrl = appUrl;
 
+  function ensureNavAuthScript() {
+    if (!document.querySelector('.site-nav')) {
+      return;
+    }
+
+    const navAuthAlreadyPresent =
+      document.querySelector('script[src*="nav-auth.js"]') || window.__NAV_AUTH_BOOTSTRAPPED;
+    if (navAuthAlreadyPresent) {
+      return;
+    }
+
+    const currentScript = document.currentScript;
+    let navAuthSrc = '../static/nav-auth.js';
+
+    if (currentScript && currentScript.getAttribute('src')) {
+      navAuthSrc = currentScript.getAttribute('src').replace('app-routing.js', 'nav-auth.js');
+    }
+
+    const script = document.createElement('script');
+    script.src = navAuthSrc;
+    script.defer = true;
+    window.__NAV_AUTH_BOOTSTRAPPED = true;
+    document.head.appendChild(script);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureNavAuthScript);
+  } else {
+    ensureNavAuthScript();
+  }
+
   if (!shouldRewriteRootRelative) {
     return;
   }
