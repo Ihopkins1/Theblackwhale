@@ -7,11 +7,38 @@
   <script src="../static/app-routing.js"></script>
   <script src="../static/nav-auth.js" defer></script>
   <link rel="stylesheet" href="../static/style.css">
+  <style>
+    .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px; }
+    .stat-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border-radius: 12px; padding: 20px; text-align: center; color: white; }
+    .stat-card .stat-number { font-size: 36px; font-weight: 700; display: block; }
+    .stat-card .stat-label { font-size: 14px; opacity: 0.8; }
+    .dash-section { background: rgba(255,255,255,0.92); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .dash-section h2 { margin-top: 0; font-size: 18px; color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-bottom: 16px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .data-table th { background: #f5f5f5; padding: 10px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; }
+    .data-table td { padding: 10px; border-bottom: 1px solid #eee; }
+    .data-table tr:hover { background: #fafafa; }
+    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-confirmed { background: #cce5ff; color: #004085; }
+    .status-denied { background: #f8d7da; color: #721c24; }
+    .status-handed_to_delivery { background: #d1ecf1; color: #0c5460; }
+    .status-shipped { background: #d4edda; color: #155724; }
+    .action-btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; margin: 2px; }
+    .btn-confirm { background: #4CAF50; color: white; }
+    .btn-deny { background: #f44336; color: white; }
+    .btn-ship { background: #2196F3; color: white; }
+    .btn-deliver { background: #9C27B0; color: white; }
+    .empty-state { text-align: center; padding: 30px; color: #999; }
+    .quick-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    .quick-action-btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-block; }
+  </style>
 </head>
-<body>  <video class="background-video" autoplay loop muted playsinline preload="auto">
+<body>
+  <video class="background-video" autoplay loop muted playsinline preload="auto">
     <source src="../static/whalebackground.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>  <div class="page-frame">
+  </video>
+  <div class="page-frame">
     <header class="site-header">
       <a class="site-brand" href="/">
         <img class="site-logo" src="../static/newblackwhale.png" alt="The Black Whale logo">
@@ -27,18 +54,39 @@
       <section class="panel hero">
         <div>
           <h1 class="section-title">Seller Dashboard</h1>
-          <p class="section-copy">Review orders, add new products, and keep your store catalog up to date with intuitive controls.</p>
+          <p class="section-copy">Manage your listings, confirm orders, and track shipments.</p>
         </div>
       </section>
-      <section class="grid">
-        <article class="card">
-          <h2>Active listings</h2>
-          <p>Showcase the items currently available in your store.</p>
-        </article>
-        <article class="card">
-          <h2>Recent orders</h2>
-          <p>See the latest activity and fulfillment status for your orders.</p>
-        </article>
+      <section class="panel">
+        <!-- Stats -->
+        <div class="dash-grid" id="statsGrid">
+          <div class="stat-card"><span class="stat-number" id="statProducts">—</span><span class="stat-label">Active Listings</span></div>
+          <div class="stat-card"><span class="stat-number" id="statPending">—</span><span class="stat-label">Pending Orders</span></div>
+          <div class="stat-card"><span class="stat-number" id="statConfirmed">—</span><span class="stat-label">Confirmed Orders</span></div>
+          <div class="stat-card"><span class="stat-number" id="statRevenue">—</span><span class="stat-label">Total Revenue</span></div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <a href="/itemeditor" class="quick-action-btn button-primary" style="background:#4CAF50;color:white;">+ Add New Listing</a>
+          <a href="/storepage" class="quick-action-btn button-secondary" style="background:#ddd;color:#333;">View Store</a>
+        </div>
+
+        <!-- Pending Orders -->
+        <div class="dash-section">
+          <h2>Orders Awaiting Action</h2>
+          <div id="pendingOrdersContainer">
+            <div class="empty-state">Loading orders...</div>
+          </div>
+        </div>
+
+        <!-- My Listings -->
+        <div class="dash-section">
+          <h2>My Listings</h2>
+          <div id="myListingsContainer">
+            <div class="empty-state">Loading listings...</div>
+          </div>
+        </div>
       </section>
     </main>
     <footer class="site-footer">© 2026 The Black Whale</footer>
@@ -49,29 +97,132 @@
   <script>
     (function() {
       const overlay = document.querySelector('.page-transition-overlay');
-      const internalLinks = Array.from(document.querySelectorAll('a[href]')).filter(link => {
-        const href = link.getAttribute('href');
-        return href && href.endsWith('.html') && !href.startsWith('http') && !href.startsWith('#');
-      });
-
-      const navigate = (href) => {
-        document.body.classList.add('transitioning');
-        overlay.classList.add('active');
-        setTimeout(() => { window.location.href = href; }, 420);
-      };
-
-      internalLinks.forEach(link => {
-        link.addEventListener('click', (event) => {
-          event.preventDefault();
-          navigate(link.getAttribute('href'));
-        });
-      });
-
       window.addEventListener('pageshow', () => {
         document.body.classList.remove('transitioning');
         overlay.classList.remove('active');
       });
+
+      async function loadDashboard() {
+        try {
+          const [ordersRes, productsRes] = await Promise.all([
+            fetch(appUrl('/api/vendor/orders')),
+            fetch(appUrl('/api/store-products'))
+          ]);
+          const ordersData = ordersRes.ok ? await ordersRes.json() : { orders: [] };
+          const productsData = productsRes.ok ? await productsRes.json() : { products: [] };
+
+          const orders = ordersData.orders || [];
+          const allProducts = productsData.products || [];
+
+          // Stats
+          const pendingItems = orders.flatMap(o => o.items).filter(i => i.vendor_confirmation_status === 'pending');
+          const confirmedItems = orders.flatMap(o => o.items).filter(i => i.vendor_confirmation_status === 'confirmed');
+          const revenue = orders.flatMap(o => o.items)
+            .filter(i => i.vendor_confirmation_status !== 'denied')
+            .reduce((sum, i) => sum + i.price_at_order * i.quantity, 0);
+
+          document.getElementById('statProducts').textContent = allProducts.length;
+          document.getElementById('statPending').textContent = pendingItems.length;
+          document.getElementById('statConfirmed').textContent = confirmedItems.length;
+          document.getElementById('statRevenue').textContent = '$' + revenue.toFixed(2);
+
+          // Pending orders table
+          const pendingContainer = document.getElementById('pendingOrdersContainer');
+          const actionableOrders = orders.filter(o => o.items.some(i => i.vendor_confirmation_status === 'pending'));
+          if (actionableOrders.length === 0) {
+            pendingContainer.innerHTML = '<div class="empty-state">No pending orders. You\'re all caught up!</div>';
+          } else {
+            let rows = '';
+            actionableOrders.forEach(order => {
+              order.items.filter(i => i.vendor_confirmation_status === 'pending').forEach(item => {
+                rows += `<tr>
+                  <td>#${order.order_id}</td>
+                  <td>${order.customer_name}</td>
+                  <td>${item.product_title}</td>
+                  <td>${item.quantity} × $${item.price_at_order.toFixed(2)}</td>
+                  <td>${new Date(order.order_date).toLocaleDateString()}</td>
+                  <td>
+                    <button class="action-btn btn-confirm" onclick="updateOrder(${item.order_item_id},'confirm')">Confirm</button>
+                    <button class="action-btn btn-deny" onclick="updateOrder(${item.order_item_id},'deny')">Deny</button>
+                  </td>
+                </tr>`;
+              });
+            });
+            pendingContainer.innerHTML = `<table class="data-table">
+              <thead><tr><th>Order</th><th>Customer</th><th>Product</th><th>Value</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody>${rows}</tbody></table>`;
+          }
+
+          // All orders (non-pending for tracking)
+          const shippableOrders = orders.filter(o => o.items.some(i => i.vendor_confirmation_status === 'confirmed' && i.item_status === 'confirmed'));
+          if (shippableOrders.length > 0) {
+            const pendingSection = document.getElementById('pendingOrdersContainer');
+            let extraRows = '';
+            shippableOrders.forEach(order => {
+              order.items.filter(i => i.item_status === 'confirmed').forEach(item => {
+                extraRows += `<tr>
+                  <td>#${order.order_id}</td>
+                  <td>${order.customer_name}</td>
+                  <td>${item.product_title}</td>
+                  <td>${item.quantity} × $${item.price_at_order.toFixed(2)}</td>
+                  <td><span class="status-badge status-confirmed">Confirmed</span></td>
+                  <td>
+                    <button class="action-btn btn-ship" onclick="updateOrder(${item.order_item_id},'ship')">Mark Shipped</button>
+                    <button class="action-btn btn-deliver" onclick="updateOrder(${item.order_item_id},'deliver')">Mark Delivered</button>
+                  </td>
+                </tr>`;
+              });
+            });
+            const existing = pendingContainer.querySelector('table');
+            if (existing) {
+              existing.querySelector('tbody').innerHTML += extraRows;
+            }
+          }
+
+          // My listings
+          const listingsContainer = document.getElementById('myListingsContainer');
+          if (allProducts.length === 0) {
+            listingsContainer.innerHTML = '<div class="empty-state">No listings yet. <a href="/itemeditor">Add your first item →</a></div>';
+          } else {
+            let listRows = '';
+            allProducts.forEach(p => {
+              listRows += `<tr>
+                <td><strong>${p.title}</strong></td>
+                <td>$${Number(p.price).toFixed(2)}</td>
+                <td>${p.inventory} in stock</td>
+                <td><a href="${appUrl('/product/' + p.product_id)}" style="color:#4CAF50;font-weight:600;">View →</a></td>
+              </tr>`;
+            });
+            listingsContainer.innerHTML = `<table class="data-table">
+              <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Link</th></tr></thead>
+              <tbody>${listRows}</tbody></table>`;
+          }
+        } catch(err) {
+          document.getElementById('pendingOrdersContainer').innerHTML = `<div class="empty-state">Error loading data: ${err.message}</div>`;
+        }
+      }
+
+      window.updateOrder = async function(orderItemId, action) {
+        try {
+          const res = await fetch(appUrl('/api/vendor/orders/' + orderItemId), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            loadDashboard();
+          } else {
+            alert(data.message || 'Action failed');
+          }
+        } catch(err) {
+          alert('Error: ' + err.message);
+        }
+      };
+
+      loadDashboard();
     })();
   </script>
 </body>
 </html>
+

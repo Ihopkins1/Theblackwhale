@@ -314,27 +314,8 @@
       }
     };
 
-    checkoutBtn.addEventListener('click', async () => {
-      checkoutBtn.disabled = true;
-      try {
-        const response = await fetch(appUrl('/api/checkout'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        });
-        const data = await response.json();
-        if (response.ok && data.redirect) {
-          window.location.href = appUrl(data.redirect);
-        } else {
-          cartMessage.textContent = data.message || 'Checkout failed';
-          cartMessage.style.display = 'block';
-          checkoutBtn.disabled = false;
-        }
-      } catch (error) {
-        cartMessage.textContent = `Error: ${error.message}`;
-        cartMessage.style.display = 'block';
-        checkoutBtn.disabled = false;
-      }
+    checkoutBtn.addEventListener('click', () => {
+      window.location.href = appUrl('/checkout');
     });
 
     // Load cart on page load

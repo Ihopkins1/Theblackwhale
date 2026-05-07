@@ -7,11 +7,36 @@
   <script src="../static/app-routing.js"></script>
   <script src="../static/nav-auth.js" defer></script>
   <link rel="stylesheet" href="../static/style.css">
+  <style>
+    .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 30px; }
+    .stat-card { background: rgba(255,255,255,0.12); backdrop-filter: blur(8px); border-radius: 12px; padding: 20px; text-align: center; color: white; }
+    .stat-card .stat-number { font-size: 36px; font-weight: 700; display: block; }
+    .stat-card .stat-label { font-size: 13px; opacity: 0.8; }
+    .dash-section { background: rgba(255,255,255,0.92); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .dash-section h2 { margin-top: 0; font-size: 18px; color: #333; border-bottom: 2px solid #1565C0; padding-bottom: 10px; margin-bottom: 16px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .data-table th { background: #f5f5f5; padding: 10px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; }
+    .data-table td { padding: 10px; border-bottom: 1px solid #eee; word-break: break-word; }
+    .data-table tr:hover { background: #fafafa; }
+    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-confirmed { background: #cce5ff; color: #004085; }
+    .status-denied { background: #f8d7da; color: #721c24; }
+    .status-shipped { background: #d4edda; color: #155724; }
+    .role-customer { background: #e3f2fd; color: #1565C0; }
+    .role-vendor { background: #f3e5f5; color: #7B1FA2; }
+    .role-admin { background: #fce4ec; color: #880E4F; }
+    .empty-state { text-align: center; padding: 30px; color: #999; }
+    .tab-bar { display: flex; gap: 8px; margin-bottom: 0; }
+    .tab-btn { padding: 8px 18px; border: none; background: #e0e0e0; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600; font-size: 14px; }
+    .tab-btn.active { background: rgba(255,255,255,0.92); color: #1565C0; }
+  </style>
 </head>
-<body>  <video class="background-video" autoplay loop muted playsinline preload="auto">
+<body>
+  <video class="background-video" autoplay loop muted playsinline preload="auto">
     <source src="../static/whalebackground.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>  <div class="page-frame">
+  </video>
+  <div class="page-frame">
     <header class="site-header">
       <a class="site-brand" href="/">
         <img class="site-logo" src="../static/newblackwhale.png" alt="The Black Whale logo">
@@ -19,7 +44,6 @@
       </a>
       <nav class="site-nav">
         <a href="/inventory">Inventory</a>
-        <a href="/seller">Seller</a>
         <a href="/logout">Logout</a>
       </nav>
     </header>
@@ -27,7 +51,35 @@
       <section class="panel hero">
         <div>
           <h1 class="section-title">Admin Dashboard</h1>
-          <p class="section-copy">Manage users, review reports, and keep the store operations running smoothly from one central dashboard.</p>
+          <p class="section-copy">Monitor orders, manage users, and oversee all store operations.</p>
+        </div>
+      </section>
+      <section class="panel">
+        <!-- Stats -->
+        <div class="dash-grid">
+          <div class="stat-card"><span class="stat-number" id="statUsers">—</span><span class="stat-label">Registered Users</span></div>
+          <div class="stat-card"><span class="stat-number" id="statProducts">—</span><span class="stat-label">Total Products</span></div>
+          <div class="stat-card"><span class="stat-number" id="statOrders">—</span><span class="stat-label">Total Orders</span></div>
+          <div class="stat-card"><span class="stat-number" id="statPending">—</span><span class="stat-label">Pending Orders</span></div>
+          <div class="stat-card"><span class="stat-number" id="statRevenue">—</span><span class="stat-label">Total Revenue</span></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="showTab('orders')">All Orders</button>
+          <button class="tab-btn" onclick="showTab('users')">Users</button>
+        </div>
+
+        <!-- Orders Tab -->
+        <div class="dash-section" id="tab-orders">
+          <h2>All Orders</h2>
+          <div id="ordersContainer"><div class="empty-state">Loading...</div></div>
+        </div>
+
+        <!-- Users Tab -->
+        <div class="dash-section" id="tab-users" style="display:none;">
+          <h2>Registered Users</h2>
+          <div id="usersContainer"><div class="empty-state">Loading...</div></div>
         </div>
       </section>
     </main>
@@ -39,33 +91,88 @@
   <script>
     (function() {
       const overlay = document.querySelector('.page-transition-overlay');
-      const internalLinks = Array.from(document.querySelectorAll('a[href]')).filter(link => {
-        const href = link.getAttribute('href');
-        return href && href.endsWith('.html') && !href.startsWith('http') && !href.startsWith('#');
-      });
-
-      const navigate = (href) => {
-        document.body.classList.add('transitioning');
-        overlay.classList.add('active');
-        setTimeout(() => { window.location.href = href; }, 420);
-      };
-
-      internalLinks.forEach(link => {
-        link.addEventListener('click', (event) => {
-          event.preventDefault();
-          navigate(link.getAttribute('href'));
-        });
-      });
-
       window.addEventListener('pageshow', () => {
         document.body.classList.remove('transitioning');
         overlay.classList.remove('active');
       });
 
-      window.addEventListener('DOMContentLoaded', () => {
-        overlay.classList.remove('active');
-      });
+      window.showTab = function(tab) {
+        document.getElementById('tab-orders').style.display = tab === 'orders' ? '' : 'none';
+        document.getElementById('tab-users').style.display = tab === 'users' ? '' : 'none';
+        document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+          btn.classList.toggle('active', (i === 0 && tab === 'orders') || (i === 1 && tab === 'users'));
+        });
+      };
+
+      async function loadDashboard() {
+        try {
+          const [statsRes, ordersRes, usersRes] = await Promise.all([
+            fetch(appUrl('/api/admin/stats')),
+            fetch(appUrl('/api/admin/orders')),
+            fetch(appUrl('/api/admin/users'))
+          ]);
+
+          if (statsRes.ok) {
+            const s = await statsRes.json();
+            document.getElementById('statUsers').textContent = s.total_users;
+            document.getElementById('statProducts').textContent = s.total_products;
+            document.getElementById('statOrders').textContent = s.total_orders;
+            document.getElementById('statPending').textContent = s.pending_orders;
+            document.getElementById('statRevenue').textContent = '$' + s.total_revenue.toFixed(2);
+          }
+
+          // Orders table
+          const ordersContainer = document.getElementById('ordersContainer');
+          if (ordersRes.ok) {
+            const od = await ordersRes.json();
+            const orders = od.orders || [];
+            if (orders.length === 0) {
+              ordersContainer.innerHTML = '<div class="empty-state">No orders yet.</div>';
+            } else {
+              let rows = orders.map(o => `<tr>
+                <td>#${o.order_id}</td>
+                <td>${o.customer_name}<br><small style="color:#999">${o.customer_email}</small></td>
+                <td>${new Date(o.order_date).toLocaleDateString()}</td>
+                <td>${o.item_count} item${o.item_count !== 1 ? 's' : ''}</td>
+                <td>$${o.total_price.toFixed(2)}</td>
+                <td><span class="status-badge status-${o.status}">${o.status}</span></td>
+                <td>${o.vendors.join(', ')}</td>
+              </tr>`).join('');
+              ordersContainer.innerHTML = `<table class="data-table">
+                <thead><tr><th>Order ID</th><th>Customer</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th><th>Vendors</th></tr></thead>
+                <tbody>${rows}</tbody></table>`;
+            }
+          }
+
+          // Users table
+          const usersContainer = document.getElementById('usersContainer');
+          if (usersRes.ok) {
+            const ud = await usersRes.json();
+            const users = ud.users || [];
+            if (users.length === 0) {
+              usersContainer.innerHTML = '<div class="empty-state">No users found.</div>';
+            } else {
+              let rows = users.map(u => `<tr>
+                <td>#${u.user_id}</td>
+                <td>${u.name}</td>
+                <td>${u.username}</td>
+                <td>${u.email}</td>
+                <td><span class="status-badge role-${u.role}">${u.role}</span></td>
+                <td>${new Date(u.created_at).toLocaleDateString()}</td>
+              </tr>`).join('');
+              usersContainer.innerHTML = `<table class="data-table">
+                <thead><tr><th>ID</th><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+                <tbody>${rows}</tbody></table>`;
+            }
+          }
+        } catch(err) {
+          document.getElementById('ordersContainer').innerHTML = `<div class="empty-state">Error: ${err.message}</div>`;
+        }
+      }
+
+      loadDashboard();
     })();
   </script>
 </body>
 </html>
+

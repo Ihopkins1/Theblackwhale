@@ -976,6 +976,38 @@ def get_all_orders():
     
     return jsonify({'orders': result}), 200
 
+@app.route('/api/admin/users', methods=['GET'])
+@require_role('admin')
+def get_all_users():
+    users = User.query.order_by(User.created_at.desc()).all()
+    result = []
+    for u in users:
+        result.append({
+            'user_id': u.user_id,
+            'name': u.name,
+            'email': u.email,
+            'username': u.username,
+            'role': u.role,
+            'created_at': u.created_at.isoformat()
+        })
+    return jsonify({'users': result}), 200
+
+@app.route('/api/admin/stats', methods=['GET'])
+@require_role('admin')
+def get_admin_stats():
+    total_users = User.query.count()
+    total_orders = Order.query.count()
+    total_products = Product.query.count()
+    pending_orders = Order.query.filter_by(status='pending').count()
+    total_revenue = db.session.query(db.func.sum(Order.total_price)).scalar() or 0
+    return jsonify({
+        'total_users': total_users,
+        'total_orders': total_orders,
+        'total_products': total_products,
+        'pending_orders': pending_orders,
+        'total_revenue': float(total_revenue)
+    }), 200
+
 @app.route('/api/user/profile', methods=['GET'])
 @require_role('customer', 'vendor', 'admin')
 def get_user_profile():
