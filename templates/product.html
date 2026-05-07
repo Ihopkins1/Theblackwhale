@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ product.title }} - The Black Whale</title>
+  <script src="../static/app-routing.js"></script>
+  <script src="../static/nav-auth.js" defer></script>
+  <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+  <video class="background-video" autoplay loop muted playsinline preload="auto">
+    <source src="../static/whalebackground.mp4" type="video/mp4">
+  </video>
+
+  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="/">
+        <img class="site-logo" src="../static/newblackwhale.png" alt="The Black Whale logo">
+        <span>The Black Whale</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/">Store Page</a>
+        <a href="/about">About Us</a>
+      </nav>
+    </header>
+
+    <main class="page-shell">
+      <section class="panel hero">
+        <div>
+          <img src="{{ product.image_url }}" alt="{{ product.title }}" style="width:100%;max-height:320px;object-fit:cover;border-radius:14px;margin-bottom:16px;">
+          <h1 class="section-title">{{ product.title }}</h1>
+          <p class="section-copy">{{ product.description }}</p>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Price</h2>
+          <p>${{ '%.2f'|format(product.price) }}</p>
+        </article>
+        <article class="card">
+          <h2>Seller</h2>
+          <p>{{ product.seller_name }}</p>
+        </article>
+        <article class="card">
+          <h2>Estimated Delivery</h2>
+          <p>{{ product.estimated_delivery }}</p>
+        </article>
+        <article class="card">
+          <h2>Nutritional Value</h2>
+          <p>{{ product.nutritional_value }}</p>
+        </article>
+      </section>
+
+      <section class="panel">
+        <a class="button button-secondary" href="/">Back to Store</a>
+      </section>
+    </main>
+
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+
+  <div class="page-transition-overlay active">
+    <img src="../static/newblackwhale.png" alt="The Black Whale logo">
+  </div>
+
+  <script>
+    (function() {
+      const overlay = document.querySelector('.page-transition-overlay');
+      window.addEventListener('pageshow', () => {
+        document.body.classList.remove('transitioning');
+        overlay.classList.remove('active');
+      });
+    })();
+  </script>
+</body>
+</html>

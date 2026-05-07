@@ -30,10 +30,18 @@
           <h1 class="section-title">Welcome to The Black Whale</h1>
           <p class="section-copy"></p>
           <div class="hero-actions">
-            <button class="button button-primary">Browse Products</button>
-            <button class="button button-secondary">Learn More</button>
+            <a class="button button-primary" href="#products">Browse Products</a>
+            <a class="button button-secondary" href="/about">Learn More</a>
           </div>
         </div>
+      </section>
+
+      <section class="panel" id="products">
+        <div>
+          <h2 class="section-title">Featured Fish</h2>
+          <p class="section-copy">Each listing opens its own product page with seller info, delivery estimate, and nutrition facts.</p>
+        </div>
+        <div id="productGrid" class="grid"></div>
       </section>
 
     </main>
@@ -67,6 +75,74 @@
         document.body.classList.remove('transitioning');
         overlay.classList.remove('active');
       });
+
+      function renderProductCard(product) {
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.innerHTML = `
+          <img src="${product.image_url || '/static/newblackwhale.png'}" alt="${product.title}" style="width:100%;height:180px;object-fit:cover;border-radius:12px;margin-bottom:12px;">
+          <h3>${product.title}</h3>
+          <p>${product.description}</p>
+          <p><strong>Price:</strong> $${Number(product.price).toFixed(2)}</p>
+          <a class="button button-primary" href="${appUrl('/product/' + product.product_id)}">View Fish</a>
+        `;
+        return card;
+      }
+
+      async function loadProducts() {
+        const productGrid = document.getElementById('productGrid');
+        if (!productGrid) return;
+
+        const fallbackProducts = [
+          {
+            product_id: 1,
+            title: 'Atlantic Salmon Fillet',
+            description: 'Fresh-cut salmon fillet with rich flavor and smooth texture.',
+            price: 18.99,
+            image_url: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=1200&q=80'
+          },
+          {
+            product_id: 2,
+            title: 'Yellowfin Tuna Steak',
+            description: 'Lean premium tuna steak with a firm bite, perfect for searing.',
+            price: 21.5,
+            image_url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=1200&q=80'
+          },
+          {
+            product_id: 3,
+            title: 'Whole Red Snapper',
+            description: 'Whole cleaned red snapper ideal for roasting with herbs and citrus.',
+            price: 26.0,
+            image_url: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=1200&q=80'
+          }
+        ];
+
+        function renderMany(products) {
+          productGrid.innerHTML = '';
+          products.forEach((product) => {
+            productGrid.appendChild(renderProductCard(product));
+          });
+        }
+
+        try {
+          const response = await fetch(appUrl('/api/store-products'));
+          if (!response.ok) {
+            throw new Error('Products API unavailable');
+          }
+          const data = await response.json();
+
+          if (!data.success || !Array.isArray(data.products) || data.products.length === 0) {
+            renderMany(fallbackProducts);
+            return;
+          }
+
+          renderMany(data.products);
+        } catch (error) {
+          renderMany(fallbackProducts);
+        }
+      }
+
+      loadProducts();
     })();
   </script>
 </body>

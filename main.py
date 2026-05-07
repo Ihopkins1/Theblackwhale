@@ -1,14 +1,23 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from datetime import datetime
 from functools import wraps
 import os
+import uuid
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce_db.db'
 app.secret_key = 'your_secret_key_here'
+app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024  # 8 MB max upload
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 db = SQLAlchemy(app)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 ADMIN_SIGNUP_KEY = 'blackwhale'
 ROLE_MAP = {
@@ -49,6 +58,19 @@ class Product(db.Model):
     
     def __repr__(self):
         return f'<Product {self.title}>'
+
+
+class ProductNutrition(db.Model):
+    __tablename__ = 'product_nutrition'
+
+    nutrition_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.product_id'), nullable=False, unique=True, index=True)
+    nutritional_value = db.Column(db.Text, nullable=False)
+
+    product = db.relationship('Product', backref=db.backref('nutrition', uselist=False))
+
+    def __repr__(self):
+        return f'<ProductNutrition {self.product_id}>'
 
 # Product variants (colors, sizes)
 class ProductVariant(db.Model):
@@ -280,9 +302,155 @@ def require_role(*allowed_roles):
     return decorator
 
 
+def product_price_value(product):
+    active_price = ProductPrice.query.filter_by(product_id=product.product_id, is_active=True)\
+        .order_by(ProductPrice.updated_at.desc())\
+        .first()
+    if active_price:
+        return float(active_price.current_price)
+
+    latest_price = ProductPrice.query.filter_by(product_id=product.product_id)\
+        .order_by(ProductPrice.updated_at.desc())\
+        .first()
+    if latest_price:
+        return float(latest_price.current_price)
+
+    return 0.0
+
+
+def serialize_product(product):
+    primary_image = ProductImage.query.filter_by(product_id=product.product_id)\
+        .order_by(ProductImage.display_order.asc(), ProductImage.image_id.asc())\
+        .first()
+
+    return {
+        'product_id': product.product_id,
+        'title': product.title,
+        'description': product.description,
+        'price': product_price_value(product),
+        'inventory': product.inventory,
+        'image_url': primary_image.image_url if primary_image else 'https://images.unsplash.com/photo-1535591273668-578e31182c4f?auto=format&fit=crop&w=1200&q=80',
+        'seller_name': product.vendor.name if product.vendor else 'Unknown Seller',
+        'estimated_delivery': '3-7 days',
+        'nutritional_value': product.nutrition.nutritional_value if product.nutrition else 'Nutritional information unavailable'
+    }
+
+
+def seed_sample_products():
+    vendor_user = User.query.filter_by(email='demo.vendor@blackwhale.com').first()
+    if not vendor_user:
+        vendor_user = User(
+            name='Black Whale Vendor',
+            email='demo.vendor@blackwhale.com',
+            username='demo_vendor',
+            password=generate_password_hash('blackwhale-demo'),
+            role='vendor'
+        )
+        db.session.add(vendor_user)
+        db.session.flush()
+
+    sample_products = [
+        {
+            'title': 'Atlantic Salmon Fillet',
+            'description': 'Fresh-cut salmon fillet with rich flavor and smooth texture. Great for grilling, baking, or meal prep.',
+            'inventory': 25,
+            'price': 18.99,
+            'nutritional_value': 'Per 100g: Protein 20g, Fat 13g, Omega-3 2.3g, Calories 208',
+            'image_url': 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=1200&q=80'
+        },
+        {
+            'title': 'Yellowfin Tuna Steak',
+            'description': 'Lean premium tuna steak with a firm bite. Perfect for searing or serving rare.',
+            'inventory': 18,
+            'price': 21.5,
+            'nutritional_value': 'Per 100g: Protein 24g, Fat 5g, Omega-3 0.6g, Calories 144',
+            'image_url': 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=1200&q=80'
+        },
+        {
+            'title': 'Whole Red Snapper',
+            'description': 'Whole cleaned red snapper, ideal for roasting or steaming with herbs and citrus.',
+            'inventory': 12,
+            'price': 26.0,
+            'nutritional_value': 'Per 100g: Protein 20g, Fat 1.3g, Potassium 444mg, Calories 100',
+            'image_url': 'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=1200&q=80'
+        },
+        {
+            'title': 'Arctic Char Portions',
+            'description': 'Delicate char portions with buttery texture and mild taste, perfect for pan searing.',
+            'inventory': 16,
+            'price': 19.75,
+            'nutritional_value': 'Per 100g: Protein 19g, Fat 11g, Vitamin D 12mcg, Calories 190',
+            'image_url': 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?auto=format&fit=crop&w=1200&q=80'
+        },
+        {
+            'title': 'Mahi Mahi Cutlets',
+            'description': 'Firm, lean mahi mahi cutlets for tacos, grilling, and fast weeknight dinners.',
+            'inventory': 20,
+            'price': 17.4,
+            'nutritional_value': 'Per 100g: Protein 20g, Fat 1g, Selenium 37mcg, Calories 85',
+            'image_url': 'https://images.unsplash.com/photo-1543332164-6e82f355bad5?auto=format&fit=crop&w=1200&q=80'
+        }
+    ]
+
+    for item in sample_products:
+        product = Product.query.filter_by(title=item['title']).first()
+        if not product:
+            product = Product(
+                vendor_id=vendor_user.user_id,
+                title=item['title'],
+                description=item['description'],
+                warranty_period_months=0,
+                inventory=item['inventory']
+            )
+            db.session.add(product)
+            db.session.flush()
+        else:
+            product.description = item['description']
+            product.inventory = item['inventory']
+
+        active_price = ProductPrice.query.filter_by(product_id=product.product_id, is_active=True).first()
+        if not active_price:
+            db.session.add(ProductPrice(
+                product_id=product.product_id,
+                current_price=item['price'],
+                original_price=item['price'],
+                discount_type='none',
+                is_active=True
+            ))
+
+        nutrition = ProductNutrition.query.filter_by(product_id=product.product_id).first()
+        if not nutrition:
+            db.session.add(ProductNutrition(
+                product_id=product.product_id,
+                nutritional_value=item['nutritional_value']
+            ))
+
+        image = ProductImage.query.filter_by(product_id=product.product_id).first()
+        if not image:
+            db.session.add(ProductImage(
+                product_id=product.product_id,
+                image_url=item['image_url'],
+                display_order=1
+            ))
+
+    db.session.commit()
+
+
 @app.route('/')
 def index():
     return render_template('storepage.html')
+
+
+@app.route('/api/store-products')
+def store_products():
+    products = Product.query.order_by(Product.created_at.desc()).all()
+    return jsonify({'success': True, 'products': [serialize_product(product) for product in products]}), 200
+
+
+@app.route('/product/<int:product_id>')
+def product_page(product_id):
+    product = Product.query.filter_by(product_id=product_id).first_or_404()
+    return render_template('product.html', product=serialize_product(product))
 
 
 @app.route('/about')
@@ -316,6 +484,92 @@ def inventory():
 @require_role('vendor')
 def itemeditor():
     return render_template('itemeditor.html')
+
+
+@app.route('/api/products', methods=['POST'])
+@require_role('vendor')
+def create_product():
+    # Support both multipart/form-data (with file upload) and JSON
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        data = request.form
+        title = str(data.get('title', '')).strip()
+        description = str(data.get('description', '')).strip()
+        nutritional_value = str(data.get('nutritional_value', '')).strip()
+        price = data.get('price')
+        stock = data.get('stock', 0)
+        image_file = request.files.get('image')
+    else:
+        raw = request.get_json() or {}
+        title = str(raw.get('title', '')).strip()
+        description = str(raw.get('description', '')).strip()
+        nutritional_value = str(raw.get('nutritional_value', '')).strip()
+        price = raw.get('price')
+        stock = raw.get('stock', 0)
+        image_file = None
+
+    if not title or not description:
+        return jsonify({'success': False, 'message': 'Title and description are required'}), 400
+
+    try:
+        numeric_price = float(price)
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'message': 'A valid price is required'}), 400
+
+    try:
+        stock_value = int(stock)
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'message': 'A valid stock value is required'}), 400
+
+    if numeric_price < 0 or stock_value < 0:
+        return jsonify({'success': False, 'message': 'Price and stock cannot be negative'}), 400
+
+    product = Product(
+        vendor_id=session['user_id'],
+        title=title,
+        description=description,
+        warranty_period_months=0,
+        inventory=stock_value
+    )
+
+    try:
+        db.session.add(product)
+        db.session.flush()
+
+        db.session.add(ProductPrice(
+            product_id=product.product_id,
+            current_price=numeric_price,
+            original_price=numeric_price,
+            discount_type='none',
+            is_active=True
+        ))
+
+        db.session.add(ProductNutrition(
+            product_id=product.product_id,
+            nutritional_value=nutritional_value or 'Per serving: Protein-rich seafood source'
+        ))
+
+        # Save uploaded image if provided
+        if image_file and image_file.filename and allowed_file(image_file.filename):
+            ext = image_file.filename.rsplit('.', 1)[1].lower()
+            safe_name = f"{uuid.uuid4().hex}.{ext}"
+            save_path = os.path.join(UPLOAD_FOLDER, safe_name)
+            image_file.save(save_path)
+            image_url = f'/static/uploads/{safe_name}'
+            db.session.add(ProductImage(
+                product_id=product.product_id,
+                image_url=image_url,
+                display_order=1
+            ))
+
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': 'Product created',
+            'redirect': url_for('product_page', product_id=product.product_id)
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Failed to create product: {str(e)}'}), 500
 
 
 @app.route('/session-info')
@@ -443,4 +697,5 @@ def logout():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        seed_sample_products()
     app.run(debug=True)

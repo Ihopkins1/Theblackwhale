@@ -29,20 +29,17 @@
       <section class="panel form-card">
         <div>
           <h1 class="section-title">Item Editor</h1>
-          <p class="section-copy">Edit an existing product or create a new listing with a clean form layout.</p>
+          <p class="section-copy">Create a fish listing. Each saved item gets its own dedicated product page.</p>
         </div>
+        <div id="editorMessage" class="error-message" style="display:none;"></div>
         <div class="form-group">
           <label for="title">Product title</label>
           <input id="title" type="text" placeholder="Enter product name">
         </div>
-        <div class="form-group">
-          <label for="sku">SKU</label>
-          <input id="sku" type="text" placeholder="e.g. BW-002">
-        </div>
         <div class="input-row">
           <div class="form-group">
             <label for="price">Price</label>
-            <input id="price" type="text" placeholder="$0.00">
+            <input id="price" type="number" min="0" step="0.01" placeholder="0.00">
           </div>
           <div class="form-group">
             <label for="stock">Stock</label>
@@ -50,12 +47,23 @@
           </div>
         </div>
         <div class="form-group">
+          <label for="productImage">Product image</label>
+          <input id="productImage" type="file" accept="image/png,image/jpeg,image/gif,image/webp">
+          <div id="imagePreview" style="display:none;margin-top:8px;">
+            <img id="previewImg" src="" alt="Preview" style="max-height:180px;max-width:100%;border-radius:8px;object-fit:cover;">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="nutrition">Nutritional value</label>
+          <textarea id="nutrition" placeholder="Per 100g: Protein 20g, Omega-3 2g, Calories 180"></textarea>
+        </div>
+        <div class="form-group">
           <label for="description">Description</label>
           <textarea id="description" placeholder="Describe the product..."></textarea>
         </div>
         <div class="button-row">
-          <button class="button button-primary" type="submit">Save product</button>
-          <button class="button button-secondary" type="button">Cancel</button>
+          <button id="saveProductButton" class="button button-primary" type="button">Save product</button>
+          <button class="button button-secondary" type="button" onclick="window.location.href=appUrl('/seller')">Cancel</button>
         </div>
       </section>
     </main>
@@ -89,6 +97,74 @@
         document.body.classList.remove('transitioning');
         overlay.classList.remove('active');
       });
+
+      const saveButton = document.getElementById('saveProductButton');
+      const editorMessage = document.getElementById('editorMessage');
+      const imageInput = document.getElementById('productImage');
+      const imagePreview = document.getElementById('imagePreview');
+      const previewImg = document.getElementById('previewImg');
+
+      imageInput.addEventListener('change', () => {
+        const file = imageInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = e => {
+            previewImg.src = e.target.result;
+            imagePreview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        } else {
+          imagePreview.style.display = 'none';
+        }
+      });
+
+      async function saveProduct() {
+        const title = document.getElementById('title').value.trim();
+        const price = document.getElementById('price').value;
+        const stock = document.getElementById('stock').value;
+        const nutrition = document.getElementById('nutrition').value.trim();
+        const description = document.getElementById('description').value.trim();
+
+        editorMessage.style.display = 'none';
+
+        if (!title || !price || !description) {
+          editorMessage.textContent = 'Title, price, and description are required.';
+          editorMessage.style.display = 'block';
+          return;
+        }
+
+        saveButton.disabled = true;
+
+        try {
+          const formData = new FormData();
+          formData.append('title', title);
+          formData.append('price', price);
+          formData.append('stock', stock || 0);
+          formData.append('nutritional_value', nutrition);
+          formData.append('description', description);
+          if (imageInput.files[0]) {
+            formData.append('image', imageInput.files[0]);
+          }
+
+          const response = await fetch(appUrl('/api/products'), {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await response.json();
+          if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Failed to save product.');
+          }
+
+          window.location.href = appUrl(data.redirect);
+        } catch (error) {
+          editorMessage.textContent = error.message || 'Failed to save product.';
+          editorMessage.style.display = 'block';
+          saveButton.disabled = false;
+        }
+      }
+
+      saveButton.addEventListener('click', saveProduct);
     })();
   </script>
 </body>
