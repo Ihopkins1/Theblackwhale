@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — The Black Whale</title>
+  <script src="../static/app-routing.js"></script>
+  <script src="../static/nav-auth.js" defer></script>
+  <link rel="stylesheet" href="../static/style.css">
+  <style>
+    .checkout-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .checkout-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    .form-section {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .form-section h2 {
+      margin-top: 0;
+      font-size: 18px;
+      color: #333;
+      border-bottom: 2px solid #4CAF50;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .form-row.full {
+      grid-template-columns: 1fr;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #333;
+      font-size: 14px;
+    }
+    .form-group input,
+    .form-group select {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+    }
+    .order-summary {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      max-height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+    .summary-title {
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    .summary-items {
+      margin-bottom: 20px;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 15px;
+    }
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 14px;
+    }
+    .summary-item-title {
+      flex: 1;
+    }
+    .summary-item-price {
+      font-weight: 600;
+    }
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 18px;
+      color: #333;
+      padding: 15px 0;
+    }
+    .payment-methods {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .payment-method {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .payment-method input[type="radio"] {
+      display: none;
+    }
+    .payment-method input[type="radio"]:checked + label {
+      border-color: #4CAF50;
+      background: #e8f5e9;
+    }
+    .payment-method label {
+      display: block;
+      cursor: pointer;
+      margin: 0;
+      font-weight: 600;
+    }
+    .error-message {
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .success-message {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .checkout-btn {
+      width: 100%;
+      padding: 14px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .checkout-btn:hover {
+      background: #45a049;
+    }
+    .checkout-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 15px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 768px) {
+      .checkout-grid {
+        grid-template-columns: 1fr;
+      }
+      .order-summary {
+        position: static;
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <video class="background-video" autoplay loop muted playsinline preload="auto">
+    <source src="../static/whalebackground.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="/">
+        <img class="site-logo" src="../static/newblackwhale.png" alt="The Black Whale logo">
+        <span>The Black Whale</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/inventory">Inventory</a>
+        <a href="/seller">Seller</a>
+        <a href="/logout">Logout</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <div class="checkout-container">
+        <h1 class="section-title">Checkout</h1>
+        
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <div class="checkout-grid">
+          <div>
+            <!-- Shipping Address -->
+            <div class="form-section">
+              <h2>Shipping Address</h2>
+              <div class="form-row full">
+                <div class="form-group">
+                  <label for="fullName">Full Name *</label>
+                  <input type="text" id="fullName" required>
+                </div>
+              </div>
+              <div class="form-row full">
+                <div class="form-group">
+                  <label for="address">Street Address *</label>
+                  <input type="text" id="address" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="city">City *</label>
+                  <input type="text" id="city" required>
+                </div>
+                <div class="form-group">
+                  <label for="state">State *</label>
+                  <input type="text" id="state" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="zip">ZIP Code *</label>
+                  <input type="text" id="zip" required>
+                </div>
+                <div class="form-group">
+                  <label for="country">Country *</label>
+                  <input type="text" id="country" value="USA" required>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="form-section" style="margin-top: 20px;">
+              <h2>Payment Information</h2>
+              <div style="margin-bottom: 20px;">
+                <strong style="display: block; margin-bottom: 10px;">Demo Payment</strong>
+                <p style="font-size: 14px; color: #666; margin: 0;">
+                  This is a demo checkout. Use any card number format (e.g., 4111 1111 1111 1111).
+                </p>
+              </div>
+              <div class="form-row full">
+                <div class="form-group">
+                  <label for="cardName">Cardholder Name *</label>
+                  <input type="text" id="cardName" placeholder="John Doe" required>
+                </div>
+              </div>
+              <div class="form-row full">
+                <div class="form-group">
+                  <label for="cardNumber">Card Number *</label>
+                  <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="expiry">Expiry Date (MM/YY) *</label>
+                  <input type="text" id="expiry" placeholder="12/25" maxlength="5" required>
+                </div>
+                <div class="form-group">
+                  <label for="cvv">CVV *</label>
+                  <input type="text" id="cvv" placeholder="123" maxlength="3" required>
+                </div>
+              </div>
+            </div>
+
+            <button id="placeOrderBtn" class="checkout-btn">Place Order</button>
+            <a href="/cart" class="back-link">← Back to Cart</a>
+          </div>
+
+          <!-- Order Summary -->
+          <div class="order-summary">
+            <div class="summary-title">Order Summary</div>
+            <div class="summary-items" id="orderItems">
+            </div>
+            <div class="summary-total">
+              <span>Total:</span>
+              <span id="orderTotal">$0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+  <div class="page-transition-overlay active">
+    <img src="../static/newblackwhale.png" alt="The Black Whale logo">
+  </div>
+
+  <script>
+    const appUrl = window.appUrl || ((path) => path);
+    const errorMsg = document.getElementById('errorMessage');
+    const successMsg = document.getElementById('successMessage');
+    const orderItemsDiv = document.getElementById('orderItems');
+    const orderTotalEl = document.getElementById('orderTotal');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+
+    // Load cart items for review
+    async function loadOrderSummary() {
+      try {
+        const response = await fetch(appUrl('/api/cart'));
+        const data = await response.json();
+        
+        if (!data.items || data.items.length === 0) {
+          errorMsg.textContent = 'Your cart is empty';
+          errorMsg.style.display = 'block';
+          placeOrderBtn.disabled = true;
+          return;
+        }
+
+        orderItemsDiv.innerHTML = '';
+        data.items.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'summary-item';
+          div.innerHTML = `
+            <div class="summary-item-title">${item.title} × ${item.quantity}</div>
+            <div class="summary-item-price">$${item.item_total.toFixed(2)}</div>
+          `;
+          orderItemsDiv.appendChild(div);
+        });
+
+        orderTotalEl.textContent = `$${data.total.toFixed(2)}`;
+      } catch (error) {
+        errorMsg.textContent = `Error loading order: ${error.message}`;
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    // Auto-fill name from profile if available
+    async function prefillProfile() {
+      try {
+        const response = await fetch(appUrl('/api/user/profile'));
+        const data = await response.json();
+        document.getElementById('fullName').value = data.name || '';
+        document.getElementById('cardName').value = data.name || '';
+      } catch (error) {
+        console.log('Could not prefill profile');
+      }
+    }
+
+    // Format card number input
+    document.getElementById('cardNumber').addEventListener('input', (e) => {
+      let val = e.target.value.replace(/\s/g, '');
+      let formatted = '';
+      for (let i = 0; i < val.length; i++) {
+        if (i > 0 && i % 4 === 0) formatted += ' ';
+        formatted += val[i];
+      }
+      e.target.value = formatted;
+    });
+
+    // Format expiry input
+    document.getElementById('expiry').addEventListener('input', (e) => {
+      let val = e.target.value.replace(/\D/g, '');
+      if (val.length > 2) {
+        val = val.slice(0, 2) + '/' + val.slice(2, 4);
+      }
+      e.target.value = val;
+    });
+
+    // CVV only numbers
+    document.getElementById('cvv').addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '');
+    });
+
+    placeOrderBtn.addEventListener('click', async () => {
+      // Validation
+      const fullName = document.getElementById('fullName').value.trim();
+      const address = document.getElementById('address').value.trim();
+      const city = document.getElementById('city').value.trim();
+      const state = document.getElementById('state').value.trim();
+      const zip = document.getElementById('zip').value.trim();
+      const cardName = document.getElementById('cardName').value.trim();
+      const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+      const expiry = document.getElementById('expiry').value;
+      const cvv = document.getElementById('cvv').value;
+
+      if (!fullName || !address || !city || !state || !zip || !cardName || !cardNumber || !expiry || !cvv) {
+        errorMsg.textContent = 'Please fill in all required fields';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      if (cardNumber.length < 13 || cardNumber.length > 19) {
+        errorMsg.textContent = 'Please enter a valid card number';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      if (!expiry.match(/^\d{2}\/\d{2}$/)) {
+        errorMsg.textContent = 'Please enter expiry in MM/YY format';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      if (cvv.length !== 3) {
+        errorMsg.textContent = 'Please enter a valid CVV';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      placeOrderBtn.disabled = true;
+      errorMsg.style.display = 'none';
+
+      try {
+        // Process payment (demo - just checkout)
+        const response = await fetch(appUrl('/api/checkout'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            shipping_address: { fullName, address, city, state, zip },
+            payment_method: 'card'
+          })
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.redirect) {
+          successMsg.textContent = 'Order placed successfully! Redirecting...';
+          successMsg.style.display = 'block';
+          setTimeout(() => {
+            window.location.href = appUrl(data.redirect);
+          }, 1500);
+        } else {
+          throw new Error(data.message || 'Checkout failed');
+        }
+      } catch (error) {
+        errorMsg.textContent = error.message;
+        errorMsg.style.display = 'block';
+        placeOrderBtn.disabled = false;
+      }
+    });
+
+    // Initialize
+    loadOrderSummary();
+    prefillProfile();
+
+    // Page transition
+    const overlay = document.querySelector('.page-transition-overlay');
+    window.addEventListener('pageshow', () => {
+      document.body.classList.remove('transitioning');
+      overlay.classList.remove('active');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Cart — The Black Whale</title>
+  <script src="../static/app-routing.js"></script>
+  <script src="../static/nav-auth.js" defer></script>
+  <link rel="stylesheet" href="../static/style.css">
+  <style>
+    .cart-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .cart-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+    .cart-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+    .cart-table th {
+      background: #f5f5f5;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #ddd;
+    }
+    .cart-table td {
+      padding: 15px 12px;
+      border-bottom: 1px solid #eee;
+    }
+    .product-info {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .product-img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+    .product-name {
+      font-weight: 600;
+      color: #333;
+    }
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .quantity-control input {
+      width: 50px;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .quantity-control button {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .quantity-control button:hover {
+      background: #e0e0e0;
+    }
+    .remove-btn {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .remove-btn:hover {
+      background: #ff5252;
+    }
+    .cart-summary {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-bottom: 20px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .summary-row.total {
+      border-bottom: none;
+      font-weight: 700;
+      font-size: 18px;
+      color: #333;
+      padding-top: 10px;
+    }
+    .checkout-btn {
+      width: 100%;
+      padding: 12px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .checkout-btn:hover {
+      background: #45a049;
+    }
+    .checkout-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .continue-shopping {
+      display: inline-block;
+      margin-top: 15px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .continue-shopping:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <video class="background-video" autoplay loop muted playsinline preload="auto">
+    <source src="../static/whalebackground.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="/">
+        <img class="site-logo" src="../static/newblackwhale.png" alt="The Black Whale logo">
+        <span>The Black Whale</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/inventory">Inventory</a>
+        <a href="/seller">Seller</a>
+        <a href="/logout">Logout</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <div class="cart-container">
+        <h1 class="section-title">Shopping Cart</h1>
+        
+        <div id="cartMessage" class="error-message" style="display:none;"></div>
+        
+        <div id="emptyCart" class="cart-empty" style="display:none;">
+          <h2>Your cart is empty</h2>
+          <p>Browse our selection of fresh fish and add items to your cart.</p>
+          <a href="/storepage" class="continue-shopping">← Back to Store</a>
+        </div>
+
+        <div id="cartContent" style="display:none;">
+          <table class="cart-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="cartItems">
+            </tbody>
+          </table>
+
+          <div class="cart-summary">
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span id="subtotal">$0.00</span>
+            </div>
+            <div class="summary-row">
+              <span>Shipping:</span>
+              <span>Free</span>
+            </div>
+            <div class="summary-row">
+              <span>Tax:</span>
+              <span>Calculated at checkout</span>
+            </div>
+            <div class="summary-row total">
+              <span>Total:</span>
+              <span id="cartTotal">$0.00</span>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn">Proceed to Checkout</button>
+            <a href="/storepage" class="continue-shopping">← Continue Shopping</a>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+  <div class="page-transition-overlay active">
+    <img src="../static/newblackwhale.png" alt="The Black Whale logo">
+  </div>
+
+  <script>
+    const appUrl = window.appUrl || ((path) => path);
+    const cartMessage = document.getElementById('cartMessage');
+    const emptyCart = document.getElementById('emptyCart');
+    const cartContent = document.getElementById('cartContent');
+    const cartItemsTable = document.getElementById('cartItems');
+    const cartTotalEl = document.getElementById('cartTotal');
+    const subtotalEl = document.getElementById('subtotal');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+
+    async function loadCart() {
+      try {
+        const response = await fetch(appUrl('/api/cart'));
+        if (response.status === 401) {
+          window.location.href = appUrl('/sign-in');
+          return;
+        }
+        const data = await response.json();
+        
+        if (!data.items || data.items.length === 0) {
+          emptyCart.style.display = 'block';
+          cartContent.style.display = 'none';
+          return;
+        }
+
+        cartContent.style.display = 'block';
+        emptyCart.style.display = 'none';
+        cartItemsTable.innerHTML = '';
+
+        data.items.forEach(item => {
+          const row = document.createElement('tr');
+          row.dataset.cartItemId = item.cart_item_id;
+          row.innerHTML = `
+            <td>
+              <div class="product-info">
+                <img src="${item.image_url}" alt="${item.title}" class="product-img">
+                <span class="product-name">${item.title}</span>
+              </div>
+            </td>
+            <td>$${item.price.toFixed(2)}</td>
+            <td>
+              <div class="quantity-control">
+                <button onclick="changeQuantity(${item.cart_item_id}, ${item.quantity - 1})">−</button>
+                <input type="number" value="${item.quantity}" min="1" data-item-id="${item.cart_item_id}">
+                <button onclick="changeQuantity(${item.cart_item_id}, ${item.quantity + 1})">+</button>
+              </div>
+            </td>
+            <td>$${item.item_total.toFixed(2)}</td>
+            <td>
+              <button class="remove-btn" onclick="removeFromCart(${item.cart_item_id})">Remove</button>
+            </td>
+          `;
+          cartItemsTable.appendChild(row);
+        });
+
+        cartTotalEl.textContent = `$${data.total.toFixed(2)}`;
+        subtotalEl.textContent = `$${data.total.toFixed(2)}`;
+      } catch (error) {
+        cartMessage.textContent = `Error loading cart: ${error.message}`;
+        cartMessage.style.display = 'block';
+      }
+    }
+
+    window.changeQuantity = async function(cartItemId, newQuantity) {
+      if (newQuantity < 1) {
+        removeFromCart(cartItemId);
+        return;
+      }
+
+      try {
+        const response = await fetch(appUrl(`/api/cart/${cartItemId}`), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity: newQuantity })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          loadCart();
+        } else {
+          cartMessage.textContent = data.message || 'Failed to update quantity';
+          cartMessage.style.display = 'block';
+        }
+      } catch (error) {
+        cartMessage.textContent = `Error: ${error.message}`;
+        cartMessage.style.display = 'block';
+      }
+    };
+
+    window.removeFromCart = async function(cartItemId) {
+      try {
+        const response = await fetch(appUrl(`/api/cart/${cartItemId}`), {
+          method: 'DELETE'
+        });
+        const data = await response.json();
+        if (response.ok) {
+          loadCart();
+        } else {
+          cartMessage.textContent = data.message || 'Failed to remove item';
+          cartMessage.style.display = 'block';
+        }
+      } catch (error) {
+        cartMessage.textContent = `Error: ${error.message}`;
+        cartMessage.style.display = 'block';
+      }
+    };
+
+    checkoutBtn.addEventListener('click', async () => {
+      checkoutBtn.disabled = true;
+      try {
+        const response = await fetch(appUrl('/api/checkout'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await response.json();
+        if (response.ok && data.redirect) {
+          window.location.href = appUrl(data.redirect);
+        } else {
+          cartMessage.textContent = data.message || 'Checkout failed';
+          cartMessage.style.display = 'block';
+          checkoutBtn.disabled = false;
+        }
+      } catch (error) {
+        cartMessage.textContent = `Error: ${error.message}`;
+        cartMessage.style.display = 'block';
+        checkoutBtn.disabled = false;
+      }
+    });
+
+    // Load cart on page load
+    loadCart();
+
+    // Page transition
+    const overlay = document.querySelector('.page-transition-overlay');
+    window.addEventListener('pageshow', () => {
+      document.body.classList.remove('transitioning');
+      overlay.classList.remove('active');
+    });
+  </script>
+</body>
+</html>

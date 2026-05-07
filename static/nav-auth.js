@@ -115,6 +115,13 @@
 
     ensureLink(nav, 'store', 'Store Page', '/');
     ensureLink(nav, 'about', 'About Us', '/about');
+    ensureLink(nav, 'cart', 'Cart', '/cart');
+
+    if (loggedIn) {
+      ensureLink(nav, 'account', 'Account', '/account');
+    } else {
+      removeLink(nav, 'account');
+    }
 
     if (isAdmin) {
       ensureLink(nav, 'inventory', 'Inventory', '/inventory');

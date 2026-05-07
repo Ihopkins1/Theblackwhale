@@ -79,13 +79,50 @@
       function renderProductCard(product) {
         const card = document.createElement('article');
         card.className = 'card';
+        const cardId = `product-${product.product_id}`;
         card.innerHTML = `
           <img src="${product.image_url || '/static/newblackwhale.png'}" alt="${product.title}" style="width:100%;height:180px;object-fit:cover;border-radius:12px;margin-bottom:12px;">
           <h3>${product.title}</h3>
           <p>${product.description}</p>
           <p><strong>Price:</strong> $${Number(product.price).toFixed(2)}</p>
-          <a class="button button-primary" href="${appUrl('/product/' + product.product_id)}">View Fish</a>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <a class="button button-primary" href="${appUrl('/product/' + product.product_id)}" style="flex:1;text-align:center;">View Fish</a>
+            <button class="button button-secondary quick-add-btn" data-product-id="${product.product_id}" style="flex:1;" id="${cardId}-btn">+ Cart</button>
+          </div>
         `;
+        const btn = card.querySelector('.quick-add-btn');
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          btn.disabled = true;
+          btn.textContent = 'Adding...';
+          try {
+            const response = await fetch(appUrl('/api/cart'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ product_id: product.product_id, quantity: 1 })
+            });
+            const data = await response.json();
+            if (response.status === 401) {
+              window.location.href = appUrl('/sign-in');
+              return;
+            }
+            if (response.ok) {
+              btn.textContent = '✓ Added';
+              setTimeout(() => {
+                btn.textContent = '+ Cart';
+                btn.disabled = false;
+              }, 2000);
+            } else {
+              alert(data.message || 'Failed to add to cart');
+              btn.textContent = '+ Cart';
+              btn.disabled = false;
+            }
+          } catch (error) {
+            alert('Error: ' + error.message);
+            btn.textContent = '+ Cart';
+            btn.disabled = false;
+          }
+        });
         return card;
       }
 

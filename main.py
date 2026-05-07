@@ -35,6 +35,7 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False, index=True)
     username = db.Column(db.String(50), unique=True, nullable=False, index=True)
     password = db.Column(db.String(255), nullable=False)
+    phone_number = db.Column(db.String(20))
     role = db.Column(db.String(20), nullable=False, index=True)  # 'admin', 'vendor', 'customer'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -288,11 +289,16 @@ def require_role(*allowed_roles):
     def decorator(view_func):
         @wraps(view_func)
         def wrapped_view(*args, **kwargs):
+            is_api = request.path.startswith('/api/')
             if 'user_id' not in session:
+                if is_api:
+                    return jsonify({'success': False, 'message': 'Please sign in to continue', 'redirect': '/sign-in'}), 401
                 return redirect(url_for('sign_in'))
 
             current_role = session.get('role')
             if current_role not in allowed_roles:
+                if is_api:
+                    return jsonify({'success': False, 'message': 'Access denied'}), 403
                 return redirect(url_for('index'))
 
             return view_func(*args, **kwargs)
@@ -452,6 +458,19 @@ def product_page(product_id):
     product = Product.query.filter_by(product_id=product_id).first_or_404()
     return render_template('product.html', product=serialize_product(product))
 
+@app.route('/cart')
+def cart():
+    return render_template('cart.html')
+
+@app.route('/checkout')
+@require_role('customer', 'vendor', 'admin')
+def checkout():
+    return render_template('checkout.html')
+
+@app.route('/account')
+@require_role('customer', 'vendor', 'admin')
+def account():
+    return render_template('account.html')
 
 @app.route('/about')
 def about():
@@ -688,6 +707,327 @@ def login_post():
         return jsonify({'success': True, 'message': 'Login successful', 'redirect': redirect_url}), 200
     else:
         return jsonify({'success': False, 'message': 'Invalid email or password'}), 401
+
+@app.route('/api/cart', methods=['GET'])
+@require_role('customer', 'vendor', 'admin')
+def get_cart():
+    user_id = session.get('user_id')
+    cart = Cart.query.filter_by(customer_id=user_id).first()
+    
+    if not cart:
+        return jsonify({'items': [], 'total': 0}), 200
+    
+    items = []
+    total = 0
+    for ci in cart.items:
+        price = float(ci.price_at_time) if ci.price_at_time else float(ci.product.prices[0].current_price if ci.product.prices else 0)
+        item_total = price * ci.quantity
+        total += item_total
+        items.append({
+            'cart_item_id': ci.cart_item_id,
+            'product_id': ci.product_id,
+            'title': ci.product.title,
+            'quantity': ci.quantity,
+            'price': price,
+            'item_total': item_total,
+            'image_url': ci.product.images[0].image_url if ci.product.images else 'https://images.unsplash.com/photo-1535591273668-578e31182c4f?auto=format&fit=crop&w=1200&q=80'
+        })
+    
+    return jsonify({'items': items, 'total': total}), 200
+
+@app.route('/api/cart', methods=['POST'])
+@require_role('customer', 'vendor', 'admin')
+def add_to_cart():
+    user_id = session.get('user_id')
+    data = request.get_json() or {}
+    product_id = data.get('product_id')
+    quantity = data.get('quantity', 1)
+    
+    if not product_id:
+        return jsonify({'success': False, 'message': 'Product ID required'}), 400
+    
+    try:
+        quantity = int(quantity)
+        if quantity < 1:
+            return jsonify({'success': False, 'message': 'Quantity must be at least 1'}), 400
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'message': 'Invalid quantity'}), 400
+    
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({'success': False, 'message': 'Product not found'}), 404
+    
+    # Get or create cart
+    cart = Cart.query.filter_by(customer_id=user_id).first()
+    if not cart:
+        cart = Cart(customer_id=user_id)
+        db.session.add(cart)
+        db.session.flush()
+    
+    # Check if item already in cart
+    existing = CartItem.query.filter_by(cart_id=cart.cart_id, product_id=product_id).first()
+    if existing:
+        existing.quantity += quantity
+    else:
+        price = float(product.prices[0].current_price) if product.prices else 0
+        cart_item = CartItem(cart_id=cart.cart_id, product_id=product_id, quantity=quantity, price_at_time=price)
+        db.session.add(cart_item)
+    
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Added to cart'}), 201
+
+@app.route('/api/cart/<int:cart_item_id>', methods=['PUT'])
+@require_role('customer', 'vendor', 'admin')
+def update_cart_item(cart_item_id):
+    user_id = session.get('user_id')
+    data = request.get_json() or {}
+    quantity = data.get('quantity')
+    
+    if quantity is None:
+        return jsonify({'success': False, 'message': 'Quantity required'}), 400
+    
+    try:
+        quantity = int(quantity)
+        if quantity < 1:
+            return jsonify({'success': False, 'message': 'Quantity must be at least 1'}), 400
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'message': 'Invalid quantity'}), 400
+    
+    ci = CartItem.query.get(cart_item_id)
+    if not ci or ci.cart.customer_id != user_id:
+        return jsonify({'success': False, 'message': 'Cart item not found'}), 404
+    
+    ci.quantity = quantity
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Updated'}), 200
+
+@app.route('/api/cart/<int:cart_item_id>', methods=['DELETE'])
+@require_role('customer', 'vendor', 'admin')
+def remove_from_cart(cart_item_id):
+    user_id = session.get('user_id')
+    
+    ci = CartItem.query.get(cart_item_id)
+    if not ci or ci.cart.customer_id != user_id:
+        return jsonify({'success': False, 'message': 'Cart item not found'}), 404
+    
+    db.session.delete(ci)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Removed from cart'}), 200
+
+@app.route('/api/checkout', methods=['POST'])
+@require_role('customer', 'vendor', 'admin')
+def api_checkout():
+    user_id = session.get('user_id')
+    data = request.get_json() or {}
+    
+    cart = Cart.query.filter_by(customer_id=user_id).first()
+    if not cart or not cart.items:
+        return jsonify({'success': False, 'message': 'Cart is empty'}), 400
+    
+    # Calculate total
+    total = 0
+    for ci in cart.items:
+        price = float(ci.price_at_time) if ci.price_at_time else float(ci.product.prices[0].current_price if ci.product.prices else 0)
+        total += price * ci.quantity
+    
+    try:
+        # Create order
+        order = Order(customer_id=user_id, total_price=total, status='pending')
+        db.session.add(order)
+        db.session.flush()
+        
+        # Create order items (one per vendor/product combination)
+        for ci in cart.items:
+            price = float(ci.price_at_time) if ci.price_at_time else float(ci.product.prices[0].current_price if ci.product.prices else 0)
+            order_item = OrderItem(
+                order_id=order.order_id,
+                product_id=ci.product_id,
+                vendor_id=ci.product.vendor_id,
+                quantity=ci.quantity,
+                price_at_order=price,
+                vendor_confirmation_status='pending',
+                item_status='pending'
+            )
+            db.session.add(order_item)
+        
+        # Clear cart
+        CartItem.query.filter_by(cart_id=cart.cart_id).delete()
+        
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': 'Order placed',
+            'order_id': order.order_id,
+            'redirect': url_for('order_detail_page', order_id=order.order_id)
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Checkout failed: {str(e)}'}), 500
+
+@app.route('/api/orders', methods=['GET'])
+@require_role('customer', 'vendor', 'admin')
+def get_user_orders():
+    user_id = session.get('user_id')
+    role = session.get('role')
+    
+    if role == 'customer':
+        orders = Order.query.filter_by(customer_id=user_id).order_by(Order.order_date.desc()).all()
+    elif role == 'vendor':
+        # Show orders containing this vendor's products
+        order_ids = db.session.query(OrderItem.order_id).filter_by(vendor_id=user_id).distinct()
+        orders = Order.query.filter(Order.order_id.in_(order_ids)).order_by(Order.order_date.desc()).all()
+    else:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    result = []
+    for order in orders:
+        result.append({
+            'order_id': order.order_id,
+            'order_date': order.order_date.isoformat(),
+            'status': order.status,
+            'total_price': float(order.total_price),
+            'item_count': len(order.items)
+        })
+    
+    return jsonify({'orders': result}), 200
+
+@app.route('/api/vendor/orders', methods=['GET'])
+@require_role('vendor')
+def get_vendor_orders():
+    user_id = session.get('user_id')
+    
+    # Get all order items from this vendor
+    order_items = OrderItem.query.filter_by(vendor_id=user_id).all()
+    order_ids = [oi.order_id for oi in order_items]
+    
+    if not order_ids:
+        return jsonify({'orders': []}), 200
+    
+    orders = Order.query.filter(Order.order_id.in_(order_ids)).order_by(Order.order_date.desc()).all()
+    
+    result = []
+    for order in orders:
+        # Get this vendor's items in this order
+        vendor_items = [oi for oi in order.items if oi.vendor_id == user_id]
+        result.append({
+            'order_id': order.order_id,
+            'customer_name': order.customer.name,
+            'customer_email': order.customer.email,
+            'order_date': order.order_date.isoformat(),
+            'status': order.status,
+            'total_price': float(order.total_price),
+            'items': [{
+                'order_item_id': oi.order_item_id,
+                'product_title': oi.product.title,
+                'quantity': oi.quantity,
+                'price_at_order': float(oi.price_at_order),
+                'vendor_confirmation_status': oi.vendor_confirmation_status,
+                'item_status': oi.item_status
+            } for oi in vendor_items]
+        })
+    
+    return jsonify({'orders': result}), 200
+
+@app.route('/api/vendor/orders/<int:order_item_id>', methods=['PUT'])
+@require_role('vendor')
+def update_vendor_order(order_item_id):
+    user_id = session.get('user_id')
+    data = request.get_json() or {}
+    
+    oi = OrderItem.query.get(order_item_id)
+    if not oi or oi.vendor_id != user_id:
+        return jsonify({'success': False, 'message': 'Order item not found'}), 404
+    
+    action = data.get('action')  # 'confirm', 'deny', 'ship', 'deliver'
+    
+    if action == 'confirm':
+        oi.vendor_confirmation_status = 'confirmed'
+        oi.item_status = 'confirmed'
+    elif action == 'deny':
+        oi.vendor_confirmation_status = 'denied'
+        oi.item_status = 'denied'
+    elif action == 'ship':
+        oi.item_status = 'handed_to_delivery'
+    elif action == 'deliver':
+        oi.item_status = 'shipped'
+    else:
+        return jsonify({'success': False, 'message': 'Invalid action'}), 400
+    
+    db.session.commit()
+    return jsonify({'success': True, 'message': f'Order updated: {action}'}), 200
+
+@app.route('/api/admin/orders', methods=['GET'])
+@require_role('admin')
+def get_all_orders():
+    orders = Order.query.order_by(Order.order_date.desc()).all()
+    
+    result = []
+    for order in orders:
+        result.append({
+            'order_id': order.order_id,
+            'customer_name': order.customer.name,
+            'customer_email': order.customer.email,
+            'order_date': order.order_date.isoformat(),
+            'status': order.status,
+            'total_price': float(order.total_price),
+            'item_count': len(order.items),
+            'vendors': list(set([oi.vendor.username for oi in order.items]))
+        })
+    
+    return jsonify({'orders': result}), 200
+
+@app.route('/api/user/profile', methods=['GET'])
+@require_role('customer', 'vendor', 'admin')
+def get_user_profile():
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    
+    if not user:
+        return jsonify({'success': False, 'message': 'User not found'}), 404
+    
+    return jsonify({
+        'user_id': user.user_id,
+        'name': user.name,
+        'email': user.email,
+        'username': user.username,
+        'phone_number': user.phone_number,
+        'role': user.role,
+        'created_at': user.created_at.isoformat()
+    }), 200
+
+@app.route('/api/user/profile', methods=['PUT'])
+@require_role('customer', 'vendor', 'admin')
+def update_user_profile():
+    user_id = session.get('user_id')
+    data = request.get_json() or {}
+    user = User.query.get(user_id)
+    
+    if not user:
+        return jsonify({'success': False, 'message': 'User not found'}), 404
+    
+    if 'name' in data:
+        user.name = str(data['name']).strip()
+    if 'phone_number' in data:
+        user.phone_number = str(data['phone_number']).strip()
+    
+    try:
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Profile updated'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Update failed: {str(e)}'}), 500
+
+@app.route('/order/<int:order_id>')
+def order_detail_page(order_id):
+    order = Order.query.get(order_id)
+    if not order:
+        return render_template('error.html', message='Order not found'), 404
+    
+    # Check authorization
+    if session.get('user_id') != order.customer_id and session.get('role') not in ['admin', 'vendor']:
+        return redirect(url_for('index'))
+    
+    return render_template('order-detail.html', order=order)
 
 @app.route('/logout')
 def logout():

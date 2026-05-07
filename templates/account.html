@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account — The Black Whale</title>
+  <script src="../static/app-routing.js"></script>
+  <script src="../static/nav-auth.js" defer></script>
+  <link rel="stylesheet" href="../static/style.css">
+  <style>
+    .account-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .account-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    .account-sidebar {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+    .profile-section {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .profile-section h2 {
+      margin-top: 0;
+      font-size: 18px;
+      color: #333;
+      border-bottom: 2px solid #4CAF50;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #333;
+      font-size: 14px;
+    }
+    .form-group input,
+    .form-group textarea {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .form-group input:disabled {
+      background: #f0f0f0;
+      cursor: not-allowed;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .btn-primary {
+      background: #4CAF50;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #45a049;
+    }
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #ddd;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #ccc;
+    }
+    .message {
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .message.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+    .message.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .orders-table th {
+      background: #f5f5f5;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #ddd;
+      font-size: 14px;
+    }
+    .orders-table td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    .orders-table tr:hover {
+      background: #f9f9f9;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .status-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status-confirmed {
+      background: #cce5ff;
+      color: #004085;
+    }
+    .status-shipped {
+      background: #d4edda;
+      color: #155724;
+    }
+    .no-orders {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    .info-row label {
+      font-weight: 600;
+      color: #333;
+    }
+    .info-row span {
+      color: #666;
+    }
+    @media (max-width: 768px) {
+      .account-grid {
+        grid-template-columns: 1fr;
+      }
+      .account-sidebar {
+        position: static;
+      }
+      .button-group {
+        flex-direction: column;
+      }
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <video class="background-video" autoplay loop muted playsinline preload="auto">
+    <source src="../static/whalebackground.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="/">
+        <img class="site-logo" src="../static/newblackwhale.png" alt="The Black Whale logo">
+        <span>The Black Whale</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/inventory">Inventory</a>
+        <a href="/seller">Seller</a>
+        <a href="/logout">Logout</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <div class="account-container">
+        <h1 class="section-title">My Account</h1>
+        
+        <div id="errorMessage" class="message error"></div>
+        <div id="successMessage" class="message success"></div>
+
+        <div class="account-grid">
+          <div class="account-sidebar">
+            <h3 style="margin-top: 0; color: #333;">Navigation</h3>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              <li style="margin-bottom: 8px;">
+                <a href="#profile" style="color: #4CAF50; text-decoration: none; font-weight: 600;">→ Profile</a>
+              </li>
+              <li style="margin-bottom: 8px;">
+                <a href="#orders" style="color: #4CAF50; text-decoration: none; font-weight: 600;">→ Order History</a>
+              </li>
+              <li>
+                <a href="/storepage" style="color: #4CAF50; text-decoration: none; font-weight: 600;">← Back to Store</a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <!-- Profile Section -->
+            <div class="profile-section" id="profile">
+              <h2>Profile Information</h2>
+              <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" disabled>
+              </div>
+              <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" disabled>
+              </div>
+              <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName">
+              </div>
+              <div class="form-group">
+                <label for="phoneNumber">Phone Number</label>
+                <input type="tel" id="phoneNumber" placeholder="+1 (555) 123-4567">
+              </div>
+              <div class="form-group">
+                <label for="role">Account Type</label>
+                <input type="text" id="role" disabled>
+              </div>
+              <div class="button-group">
+                <button id="saveBtn" class="btn btn-primary">Save Changes</button>
+                <button id="cancelBtn" class="btn btn-secondary">Cancel</button>
+              </div>
+            </div>
+
+            <!-- Order History Section -->
+            <div class="profile-section" id="orders">
+              <h2>Order History</h2>
+              <div id="ordersContent">
+                <table class="orders-table">
+                  <thead>
+                    <tr>
+                      <th>Order ID</th>
+                      <th>Date</th>
+                      <th>Items</th>
+                      <th>Total</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ordersBody">
+                  </tbody>
+                </table>
+              </div>
+              <div id="noOrders" class="no-orders" style="display: none;">
+                <p>You haven't placed any orders yet.</p>
+                <a href="/storepage" style="color: #4CAF50; text-decoration: none;">Browse our store</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+  <div class="page-transition-overlay active">
+    <img src="../static/newblackwhale.png" alt="The Black Whale logo">
+  </div>
+
+  <script>
+    const appUrl = window.appUrl || ((path) => path);
+    const errorMsg = document.getElementById('errorMessage');
+    const successMsg = document.getElementById('successMessage');
+    
+    let originalProfile = {};
+
+    async function loadProfile() {
+      try {
+        const response = await fetch(appUrl('/api/user/profile'));
+        const data = await response.json();
+        
+        document.getElementById('username').value = data.username || '';
+        document.getElementById('email').value = data.email || '';
+        document.getElementById('fullName').value = data.name || '';
+        document.getElementById('phoneNumber').value = data.phone_number || '';
+        document.getElementById('role').value = (data.role === 'vendor' ? 'Seller' : data.role === 'customer' ? 'Customer' : 'Admin') || '';
+        
+        originalProfile = { ...data };
+      } catch (error) {
+        errorMsg.textContent = `Error loading profile: ${error.message}`;
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    async function loadOrders() {
+      try {
+        const response = await fetch(appUrl('/api/orders'));
+        const data = await response.json();
+        
+        const ordersBody = document.getElementById('ordersBody');
+        const noOrders = document.getElementById('noOrders');
+        
+        if (!data.orders || data.orders.length === 0) {
+          ordersBody.innerHTML = '';
+          noOrders.style.display = 'block';
+          return;
+        }
+        
+        noOrders.style.display = 'none';
+        ordersBody.innerHTML = '';
+        
+        data.orders.forEach(order => {
+          const row = document.createElement('tr');
+          const statusClass = `status-${order.status}`;
+          const date = new Date(order.order_date).toLocaleDateString();
+          
+          row.innerHTML = `
+            <td>#${order.order_id}</td>
+            <td>${date}</td>
+            <td>${order.item_count} item${order.item_count !== 1 ? 's' : ''}</td>
+            <td>$${order.total_price.toFixed(2)}</td>
+            <td><span class="status-badge ${statusClass}">${order.status}</span></td>
+          `;
+          ordersBody.appendChild(row);
+        });
+      } catch (error) {
+        errorMsg.textContent = `Error loading orders: ${error.message}`;
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      const fullName = document.getElementById('fullName').value.trim();
+      const phoneNumber = document.getElementById('phoneNumber').value.trim();
+      
+      if (!fullName) {
+        errorMsg.textContent = 'Full name is required';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      
+      try {
+        const response = await fetch(appUrl('/api/user/profile'), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: fullName,
+            phone_number: phoneNumber
+          })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+          successMsg.textContent = 'Profile updated successfully!';
+          successMsg.style.display = 'block';
+          errorMsg.style.display = 'none';
+          setTimeout(() => {
+            successMsg.style.display = 'none';
+          }, 3000);
+        } else {
+          throw new Error(data.message || 'Update failed');
+        }
+      } catch (error) {
+        errorMsg.textContent = error.message;
+        errorMsg.style.display = 'block';
+      }
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      document.getElementById('fullName').value = originalProfile.name || '';
+      document.getElementById('phoneNumber').value = originalProfile.phone_number || '';
+      errorMsg.style.display = 'none';
+    });
+
+    // Initialize
+    loadProfile();
+    loadOrders();
+
+    // Page transition
+    const overlay = document.querySelector('.page-transition-overlay');
+    window.addEventListener('pageshow', () => {
+      document.body.classList.remove('transitioning');
+      overlay.classList.remove('active');
+    });
+  </script>
+</body>
+</html>
