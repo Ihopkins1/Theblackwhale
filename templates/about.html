@@ -8,7 +8,7 @@
   <script src="../static/nav-auth.js" defer></script>
   <link rel="stylesheet" href="../static/style.css">
 </head>
-<body>
+<body class="about-dive-page">
   <video class="background-video" autoplay loop muted playsinline preload="auto">
     <source src="../static/whalebackground.mp4" type="video/mp4">
   </video>
@@ -24,23 +24,37 @@
       </nav>
     </header>
 
-    <main class="page-shell">
-      <section class="panel hero">
+    <main class="page-shell about-dive-shell">
+      <div class="about-bubbles" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </div>
+
+      <section class="about-flow about-depth-section">
         <div>
           <h1 class="section-title">About Us</h1>
-          <p class="section-copy">The Black Whale is a student-built commerce platform focused on clean role-based workflows for customers, sellers, and admins.</p>
+          <p class="section-copy">The Black Whale was built as a premium seafood platform for people seeking luxury fish, whether they are sourcing for their business or preparing a memorable dinner with family.</p>
         </div>
       </section>
 
-      <section class="grid">
-        <article class="card">
-          <h2>Our Mission</h2>
-          <p>Build a storefront that is simple for customers, productive for sellers, and controlled for administrators.</p>
-        </article>
-        <article class="card">
-          <h2>How We Work</h2>
-          <p>We iterate quickly, test role permissions in real workflows, and keep UX focused on clear navigation.</p>
-        </article>
+      <section class="about-flow about-depth-section">
+        <h2>Why We Built It</h2>
+        <p>We wanted one place where quality fish is the standard, not the exception. Every part of the experience is designed so customers can discover trusted products, place orders with confidence, and return knowing they will receive high-quality seafood every time.</p>
+      </section>
+
+      <section class="about-team about-depth-section">
+        <h2>Team Contributions</h2>
+        <p>CSS and visual design was led mostly by Adonis Pearson and Kayron, shaping the look and overall motion of the storefront.</p>
+        <p>Core functionality and feature workflows were developed by Ishaan Hopkins and Byron Ross, including account flows, order logic, and dashboard behavior.</p>
+      </section>
+
+      <section class="about-commitment about-depth-section">
+        <h2>Our Quality Promise</h2>
+        <ul class="about-list">
+          <li>Maintain a curated marketplace focused on premium fish selections.</li>
+          <li>Provide clear order and fulfillment visibility from checkout to delivery.</li>
+          <li>Keep the platform simple enough for family dining and strong enough for business sourcing.</li>
+        </ul>
       </section>
     </main>
 
@@ -48,33 +62,38 @@
   </div>
 
   <div class="page-transition-overlay active">
-    <img src="../static/newblackwhale.png" alt="The Black Whale logo">
   </div>
   <script>
-    (function() {
+    (function () {
       const overlay = document.querySelector('.page-transition-overlay');
-      const internalLinks = Array.from(document.querySelectorAll('a[href]')).filter(link => {
-        const href = link.getAttribute('href');
-        return href && href.endsWith('.html') && !href.startsWith('http') && !href.startsWith('#');
-      });
+      const sections = Array.from(document.querySelectorAll('.about-depth-section'));
 
-      const navigate = (href) => {
-        document.body.classList.add('transitioning');
-        overlay.classList.add('active');
-        setTimeout(() => { window.location.href = href; }, 420);
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.24 });
+
+      sections.forEach((section) => observer.observe(section));
+
+      const setDiveDepth = () => {
+        const scrollable = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+        const progress = Math.min(window.scrollY / scrollable, 1);
+        document.body.style.setProperty('--dive-progress', progress.toFixed(3));
       };
 
-      internalLinks.forEach(link => {
-        link.addEventListener('click', (event) => {
-          event.preventDefault();
-          navigate(link.getAttribute('href'));
-        });
-      });
-
+      window.addEventListener('scroll', setDiveDepth, { passive: true });
+      window.addEventListener('resize', setDiveDepth);
       window.addEventListener('pageshow', () => {
         document.body.classList.remove('transitioning');
         overlay.classList.remove('active');
+        setDiveDepth();
       });
+
+      setDiveDepth();
     })();
   </script>
 </body>
