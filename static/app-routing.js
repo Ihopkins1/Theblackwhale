@@ -83,37 +83,10 @@
     document.head.appendChild(script);
   }
 
-  function ensureTransitionVideo() {
-    const overlay = document.querySelector('.page-transition-overlay');
-    if (!overlay || overlay.dataset.videoReady === '1') {
-      return;
-    }
-
-    overlay.innerHTML = '';
-
-    const video = document.createElement('video');
-    video.className = 'transition-logo-video';
-    video.autoplay = true;
-    video.loop = true;
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = 'auto';
-
-    const source = document.createElement('source');
-    source.src = appUrl('/static/my_logo_video.mp4');
-    source.type = 'video/mp4';
-
-    video.appendChild(source);
-    overlay.appendChild(video);
-    overlay.dataset.videoReady = '1';
-  }
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', ensureNavAuthScript);
-    document.addEventListener('DOMContentLoaded', ensureTransitionVideo);
   } else {
     ensureNavAuthScript();
-    ensureTransitionVideo();
   }
 
   if (!shouldRewriteRootRelative) {

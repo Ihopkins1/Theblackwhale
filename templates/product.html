@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -7,6 +7,183 @@
   <script src="../static/app-routing.js"></script>
   <script src="../static/nav-auth.js" defer></script>
   <link rel="stylesheet" href="../static/style.css">
+  <style>
+    .reviews-section {
+      background: rgba(20, 30, 50, 0.82);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 1.1rem;
+      padding: 1.6rem 1.8rem;
+      margin-bottom: 2rem;
+    }
+
+    .reviews-header {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      padding-bottom: 0.9rem;
+    }
+
+    .reviews-title {
+      margin: 0;
+      font-size: 1.3rem;
+      color: #f8fafc;
+      font-family: var(--font-heading);
+    }
+
+    .reviews-summary {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .reviews-avg-stars {
+      color: #facc15;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+    }
+
+    .reviews-avg-num {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #f8fafc;
+    }
+
+    .reviews-count {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .review-form-wrap {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.15);
+      border-radius: 0.85rem;
+      padding: 1.1rem 1.25rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .review-form-title {
+      margin: 0 0 0.8rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-family: var(--font-heading);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .review-star-picker {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 0.75rem;
+    }
+
+    .star-btn {
+      background: none;
+      border: none;
+      font-size: 1.6rem;
+      color: rgba(148, 163, 184, 0.3);
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+      transition: color 0.15s, transform 0.12s;
+    }
+
+    .star-btn:hover,
+    .star-btn.lit {
+      color: #facc15;
+    }
+
+    .star-btn:hover {
+      transform: scale(1.15);
+    }
+
+    .review-textarea {
+      width: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 0.7rem;
+      padding: 0.7rem 0.9rem;
+      background: rgba(15, 23, 42, 0.82);
+      color: #f8fafc;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      resize: vertical;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .review-textarea:focus {
+      border-color: rgba(56, 189, 248, 0.45);
+    }
+
+    .review-item {
+      padding: 0.95rem 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+    }
+
+    .review-item:last-child {
+      border-bottom: none;
+    }
+
+    .review-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0.3rem;
+      flex-wrap: wrap;
+    }
+
+    .review-author {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+
+    .review-stars {
+      color: #facc15;
+      font-size: 1rem;
+      letter-spacing: 1px;
+    }
+
+    .review-date {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .review-body {
+      color: rgba(203, 213, 225, 0.9);
+      line-height: 1.7;
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    .no-reviews {
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-align: center;
+      padding: 1.5rem 0;
+      margin: 0;
+    }
+
+    .review-msg-ok {
+      color: #4ade80;
+    }
+
+    .review-msg-err {
+      color: #f87171;
+    }
+
+    .sign-in-note {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .sign-in-note a {
+      color: var(--accent);
+    }
+  </style>
 </head>
 <body>
   <video class="background-video" autoplay loop muted playsinline preload="auto">
@@ -56,6 +233,19 @@
       <section class="panel">
         <a class="button button-secondary" href="/">Back to Store</a>
       </section>
+
+      <section class="reviews-section">
+        <div class="reviews-header">
+          <h2 class="reviews-title">Customer Reviews</h2>
+          <div class="reviews-summary" id="reviewsSummary" style="display:none;">
+            <span class="reviews-avg-stars" id="reviewsAvgStars"></span>
+            <span class="reviews-avg-num" id="reviewsAvgNum"></span>
+            <span class="reviews-count" id="reviewsCount"></span>
+          </div>
+        </div>
+        <div id="reviewFormWrap"></div>
+        <div id="reviewsList"><p class="no-reviews">Loading reviews...</p></div>
+      </section>
     </main>
 
     <footer class="site-footer">© 2026 The Black Whale</footer>
@@ -67,10 +257,183 @@
   <script>
     (function() {
       const overlay = document.querySelector('.page-transition-overlay');
+      const PRODUCT_ID = {{ product.product_id }};
+      let selectedRating = 0;
+
+      function starsHtml(rating) {
+        let stars = '';
+        for (let i = 1; i <= 5; i++) {
+          stars += i <= rating ? '★' : '☆';
+        }
+        return stars;
+      }
+
+      function escapeHtml(text) {
+        return String(text || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function renderReviews(reviews, averageRating, count) {
+        const summary = document.getElementById('reviewsSummary');
+        if (count > 0) {
+          document.getElementById('reviewsAvgStars').textContent = starsHtml(Math.round(averageRating));
+          document.getElementById('reviewsAvgNum').textContent = Number(averageRating).toFixed(1);
+          document.getElementById('reviewsCount').textContent = '(' + count + (count === 1 ? ' review' : ' reviews') + ')';
+          summary.style.display = 'flex';
+        } else {
+          summary.style.display = 'none';
+        }
+
+        const list = document.getElementById('reviewsList');
+        if (!reviews.length) {
+          list.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to leave one!</p>';
+          return;
+        }
+
+        list.innerHTML = reviews.map(review => {
+          const dateText = review.created_at
+            ? new Date(review.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+            : '';
+          const body = review.description
+            ? '<p class="review-body">' + escapeHtml(review.description) + '</p>'
+            : '';
+          return (
+            '<div class="review-item">' +
+              '<div class="review-meta">' +
+                '<span class="review-author">' + escapeHtml(review.name || 'Anonymous') + '</span>' +
+                '<span class="review-stars">' + starsHtml(review.rating) + '</span>' +
+                '<span class="review-date">' + escapeHtml(dateText) + '</span>' +
+              '</div>' +
+              body +
+            '</div>'
+          );
+        }).join('');
+      }
+
+      function buildReviewForm(isLoggedIn) {
+        const wrap = document.getElementById('reviewFormWrap');
+        if (!isLoggedIn) {
+          wrap.innerHTML = '<p class="sign-in-note"><a href="/sign-in">Sign in</a> to leave a review.</p>';
+          return;
+        }
+
+        wrap.innerHTML =
+          '<div class="review-form-wrap">' +
+            '<p class="review-form-title">Leave a Review</p>' +
+            '<div class="review-star-picker" id="starPicker">' +
+              [1, 2, 3, 4, 5].map(value => (
+                '<button type="button" class="star-btn" data-val="' + value + '" aria-label="' + value + ' star">★</button>'
+              )).join('') +
+            '</div>' +
+            '<textarea id="reviewText" class="review-textarea" placeholder="Share your experience..." rows="3"></textarea>' +
+            '<button class="button button-primary btn-small" id="submitReview" style="margin-top:0.75rem;">Post Review</button>' +
+            '<p id="reviewMsg" style="margin-top:0.5rem;font-size:0.9rem;display:none;"></p>' +
+          '</div>';
+
+        document.querySelectorAll('#starPicker .star-btn').forEach(button => {
+          button.addEventListener('click', () => {
+            selectedRating = parseInt(button.dataset.val, 10);
+            document.querySelectorAll('#starPicker .star-btn').forEach(star => {
+              star.classList.toggle('lit', parseInt(star.dataset.val, 10) <= selectedRating);
+            });
+          });
+
+          button.addEventListener('mouseenter', () => {
+            const hoverValue = parseInt(button.dataset.val, 10);
+            document.querySelectorAll('#starPicker .star-btn').forEach(star => {
+              star.style.color = parseInt(star.dataset.val, 10) <= hoverValue ? '#facc15' : '';
+            });
+          });
+
+          button.addEventListener('mouseleave', () => {
+            document.querySelectorAll('#starPicker .star-btn').forEach(star => {
+              star.style.color = parseInt(star.dataset.val, 10) <= selectedRating ? '#facc15' : '';
+            });
+          });
+        });
+
+        document.getElementById('submitReview').addEventListener('click', async function () {
+          const msg = document.getElementById('reviewMsg');
+          if (!selectedRating) {
+            msg.textContent = 'Please select a star rating.';
+            msg.className = 'review-msg-err';
+            msg.style.display = 'block';
+            return;
+          }
+
+          this.disabled = true;
+          try {
+            const response = await fetch(appUrl('/api/products/' + PRODUCT_ID + '/reviews'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                rating: selectedRating,
+                description: document.getElementById('reviewText').value.trim()
+              })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+              msg.textContent = 'Review posted!';
+              msg.className = 'review-msg-ok';
+              msg.style.display = 'block';
+              document.getElementById('reviewText').value = '';
+              selectedRating = 0;
+              document.querySelectorAll('#starPicker .star-btn').forEach(star => {
+                star.classList.remove('lit');
+                star.style.color = '';
+              });
+              await loadReviews();
+            } else {
+              msg.textContent = data.message || 'Could not post review.';
+              msg.className = 'review-msg-err';
+              msg.style.display = 'block';
+            }
+          } catch (error) {
+            msg.textContent = 'Network error while posting review.';
+            msg.className = 'review-msg-err';
+            msg.style.display = 'block';
+          }
+          this.disabled = false;
+        });
+      }
+
+      async function loadReviews() {
+        try {
+          const response = await fetch(appUrl('/api/products/' + PRODUCT_ID + '/reviews'));
+          const data = await response.json();
+          if (data.success) {
+            renderReviews(data.reviews || [], data.average_rating || 0, data.count || 0);
+          } else {
+            document.getElementById('reviewsList').innerHTML = '<p class="no-reviews">Could not load reviews.</p>';
+          }
+        } catch (error) {
+          document.getElementById('reviewsList').innerHTML = '<p class="no-reviews">Could not load reviews.</p>';
+        }
+      }
+
+      async function initReviews() {
+        try {
+          const sessionResponse = await fetch(appUrl('/session-info'));
+          const sessionData = await sessionResponse.json();
+          buildReviewForm(Boolean(sessionData && sessionData.logged_in));
+        } catch (error) {
+          buildReviewForm(false);
+        }
+
+        await loadReviews();
+      }
+
       window.addEventListener('pageshow', () => {
         document.body.classList.remove('transitioning');
         overlay.classList.remove('active');
       });
+
+      initReviews();
     })();
   </script>
 </body>

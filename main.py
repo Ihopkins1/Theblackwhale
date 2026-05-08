@@ -458,6 +458,67 @@ def product_page(product_id):
     product = Product.query.filter_by(product_id=product_id).first_or_404()
     return render_template('product.html', product=serialize_product(product))
 
+
+@app.route('/api/products/<int:product_id>/reviews', methods=['GET'])
+def get_product_reviews(product_id):
+    reviews = Review.query.filter_by(product_id=product_id).order_by(Review.created_at.desc()).all()
+    review_rows = []
+    for review in reviews:
+        display_name = review.customer.name if review.customer and review.customer.name else (review.customer.username if review.customer else 'Anonymous')
+        review_rows.append({
+            'review_id': review.review_id,
+            'rating': review.rating,
+            'description': review.description or '',
+            'username': review.customer.username if review.customer else None,
+            'name': display_name,
+            'created_at': review.created_at.isoformat() if review.created_at else None
+        })
+
+    average_rating = round(sum(review.rating for review in reviews) / len(reviews), 1) if reviews else 0
+    return jsonify({
+        'success': True,
+        'reviews': review_rows,
+        'count': len(reviews),
+        'average_rating': average_rating
+    }), 200
+
+
+@app.route('/api/products/<int:product_id>/reviews', methods=['POST'])
+@require_role('customer', 'vendor', 'admin')
+def post_product_review(product_id):
+    data = request.get_json() or {}
+    rating = data.get('rating')
+    description = str(data.get('description', '')).strip()
+
+    if not isinstance(rating, int) or rating < 1 or rating > 5:
+        return jsonify({'success': False, 'message': 'Rating must be between 1 and 5'}), 400
+
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({'success': False, 'message': 'Product not found'}), 404
+
+    user_id = session.get('user_id')
+    existing_review = Review.query.filter_by(product_id=product_id, customer_id=user_id).first()
+
+    if existing_review:
+        existing_review.rating = rating
+        existing_review.description = description
+        existing_review.created_at = datetime.utcnow()
+    else:
+        db.session.add(Review(
+            product_id=product_id,
+            customer_id=user_id,
+            rating=rating,
+            description=description
+        ))
+
+    try:
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Review saved'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Failed to save review: {str(e)}'}), 500
+
 @app.route('/cart')
 def cart():
     return render_template('cart.html')
