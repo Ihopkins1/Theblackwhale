@@ -9,129 +9,286 @@
   <link rel="stylesheet" href="../static/style.css">
   <style>
     .cart-container {
-      max-width: 1000px;
+      max-width: 1060px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 1.2rem;
     }
+
+    .cart-layout {
+      display: grid;
+      grid-template-columns: 1.65fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .cart-panel {
+      background: linear-gradient(180deg, rgba(12, 21, 36, 0.9), rgba(9, 15, 27, 0.86));
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 1rem;
+      padding: 1rem;
+      box-shadow: 0 12px 28px rgba(2, 6, 23, 0.22);
+    }
+
+    .cart-section-title {
+      margin: 0 0 0.85rem;
+      font-size: 0.95rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #7dd3fc;
+      font-weight: 700;
+    }
+
+    .delivery-toggle {
+      display: flex;
+      gap: 0.65rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .delivery-option {
+      flex: 1;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 0.85rem;
+      background: rgba(15, 23, 42, 0.74);
+      color: #cbd5e1;
+      padding: 0.85rem 0.9rem;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .delivery-option:hover {
+      border-color: rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .delivery-option.active {
+      background: #7dd3fc;
+      color: #082f49;
+      border-color: #7dd3fc;
+    }
+
+    .delivery-note {
+      margin: 0 0 1rem;
+      padding: 0.8rem 0.9rem;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      background: rgba(56, 189, 248, 0.09);
+      color: #bae6fd;
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
     .cart-empty {
       text-align: center;
-      padding: 60px 20px;
-      color: #666;
+      padding: 3rem 1.25rem;
+      color: #94a3b8;
+      background: linear-gradient(180deg, rgba(12, 21, 36, 0.9), rgba(9, 15, 27, 0.86));
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 1rem;
     }
+
+    .cart-empty h2 {
+      margin: 0 0 0.5rem;
+      color: #e2e8f0;
+      font-family: var(--font-heading);
+    }
+
     .cart-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 30px;
+      margin-bottom: 0;
     }
+
     .cart-table th {
-      background: #f5f5f5;
-      padding: 12px;
+      background: rgba(15, 23, 42, 0.72);
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.76rem;
+      padding: 0.75rem;
       text-align: left;
       font-weight: 600;
-      border-bottom: 2px solid #ddd;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
     }
+
     .cart-table td {
-      padding: 15px 12px;
-      border-bottom: 1px solid #eee;
+      padding: 0.9rem 0.75rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      color: #cbd5e1;
     }
+
+    .cart-table tr:last-child td {
+      border-bottom: none;
+    }
+
     .product-info {
       display: flex;
-      gap: 15px;
+      gap: 0.8rem;
       align-items: center;
     }
+
     .product-img {
-      width: 80px;
-      height: 80px;
+      width: 68px;
+      height: 68px;
       object-fit: cover;
-      border-radius: 6px;
+      border-radius: 0.7rem;
+      border: 1px solid rgba(148, 163, 184, 0.18);
     }
+
     .product-name {
       font-weight: 600;
-      color: #333;
+      color: #f8fafc;
     }
+
     .quantity-control {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 0.35rem;
     }
+
     .quantity-control input {
-      width: 50px;
-      padding: 6px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      width: 52px;
+      padding: 0.4rem;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0.5rem;
       text-align: center;
+      background: rgba(15, 23, 42, 0.84);
+      color: #f8fafc;
     }
+
     .quantity-control button {
-      background: #f5f5f5;
-      border: 1px solid #ddd;
-      padding: 6px 10px;
-      border-radius: 4px;
+      background: rgba(30, 41, 59, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: #e2e8f0;
+      padding: 0.38rem 0.62rem;
+      border-radius: 0.5rem;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 0.88rem;
     }
+
     .quantity-control button:hover {
-      background: #e0e0e0;
+      background: rgba(56, 189, 248, 0.14);
+      border-color: rgba(56, 189, 248, 0.42);
     }
+
     .remove-btn {
-      background: #ff6b6b;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
+      background: rgba(248, 113, 113, 0.14);
+      color: #fca5a5;
+      border: 1px solid rgba(248, 113, 113, 0.35);
+      padding: 0.42rem 0.7rem;
+      border-radius: 999px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
     }
+
     .remove-btn:hover {
-      background: #ff5252;
+      background: rgba(248, 113, 113, 0.24);
     }
+
     .cart-summary {
-      background: #f9f9f9;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 400px;
-      margin-left: auto;
-      margin-bottom: 20px;
+      background: linear-gradient(180deg, rgba(12, 21, 36, 0.9), rgba(9, 15, 27, 0.86));
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      padding: 1.1rem;
+      border-radius: 1rem;
+      position: sticky;
+      top: 7.6rem;
+      box-shadow: 0 12px 28px rgba(2, 6, 23, 0.22);
     }
+
+    .summary-heading {
+      margin: 0 0 1rem;
+      color: #e2e8f0;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+      padding-bottom: 0.7rem;
+    }
+
     .summary-row {
       display: flex;
       justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid #eee;
+      padding: 0.62rem 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      color: #cbd5e1;
+      font-size: 0.92rem;
     }
+
     .summary-row.total {
       border-bottom: none;
       font-weight: 700;
-      font-size: 18px;
-      color: #333;
-      padding-top: 10px;
+      font-size: 1.05rem;
+      color: #f8fafc;
+      padding-top: 0.9rem;
     }
+
     .checkout-btn {
       width: 100%;
-      padding: 12px;
-      background: #4CAF50;
-      color: white;
+      padding: 0.9rem;
+      background: var(--accent-strong);
+      color: #fff;
       border: none;
-      border-radius: 6px;
-      font-size: 16px;
+      border-radius: 999px;
+      font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 1rem;
+      transition: all 0.25s ease;
+      box-shadow: 0 12px 24px rgba(14, 165, 233, 0.24);
     }
+
     .checkout-btn:hover {
-      background: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 18px 30px rgba(14, 165, 233, 0.35);
     }
+
     .checkout-btn:disabled {
-      background: #ccc;
+      background: #64748b;
       cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
     }
+
     .continue-shopping {
       display: inline-block;
-      margin-top: 15px;
-      color: #007bff;
+      margin-top: 0.9rem;
+      color: #7dd3fc;
       text-decoration: none;
+      font-weight: 600;
     }
+
     .continue-shopping:hover {
-      text-decoration: underline;
+      color: #bae6fd;
+    }
+
+    @media (max-width: 920px) {
+      .cart-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .cart-summary {
+        position: static;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .cart-container {
+        padding: 0.9rem;
+      }
+
+      .delivery-toggle {
+        flex-direction: column;
+      }
+
+      .cart-table th:nth-child(2),
+      .cart-table td:nth-child(2) {
+        display: none;
+      }
+
+      .product-info {
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -147,9 +304,6 @@
         <span>The Black Whale</span>
       </a>
       <nav class="site-nav">
-        <a href="/inventory">Inventory</a>
-        <a href="/seller">Seller</a>
-        <a href="/logout">Logout</a>
       </nav>
     </header>
     <main class="page-shell">
@@ -161,43 +315,55 @@
         <div id="emptyCart" class="cart-empty" style="display:none;">
           <h2>Your cart is empty</h2>
           <p>Browse our selection of fresh fish and add items to your cart.</p>
-          <a href="/storepage" class="continue-shopping">← Back to Store</a>
+          <a href="/shop" class="continue-shopping">← Back to Shop</a>
         </div>
 
         <div id="cartContent" style="display:none;">
-          <table class="cart-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Price</th>
-                <th>Quantity</th>
-                <th>Total</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="cartItems">
-            </tbody>
-          </table>
+          <div class="cart-layout">
+            <section class="cart-panel">
+              <h2 class="cart-section-title">Items</h2>
+              <table class="cart-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="cartItems">
+                </tbody>
+              </table>
+            </section>
 
-          <div class="cart-summary">
-            <div class="summary-row">
-              <span>Subtotal:</span>
-              <span id="subtotal">$0.00</span>
+            <aside class="cart-summary">
+              <h2 class="summary-heading">Order Summary</h2>
+              <div class="delivery-toggle">
+                <button class="delivery-option active" data-method="shipping" type="button">Ship</button>
+                <button class="delivery-option" data-method="pickup" type="button">Pickup</button>
+              </div>
+              <p class="delivery-note" id="deliveryNote">Ship to your address. Delivery details are confirmed in checkout.</p>
+
+              <div class="summary-row">
+                <span>Subtotal:</span>
+                <span id="subtotal">$0.00</span>
+              </div>
+              <div class="summary-row">
+                <span>Fulfillment:</span>
+                <span id="fulfillmentLabel">Shipping</span>
+              </div>
+              <div class="summary-row">
+                <span>Tax:</span>
+                <span>Calculated at checkout</span>
+              </div>
+              <div class="summary-row total">
+                <span>Total:</span>
+                <span id="cartTotal">$0.00</span>
+              </div>
+              <button class="checkout-btn" id="checkoutBtn">Continue to Checkout</button>
+              <a href="/shop" class="continue-shopping">← Continue Shopping</a>
             </div>
-            <div class="summary-row">
-              <span>Shipping:</span>
-              <span>Free</span>
-            </div>
-            <div class="summary-row">
-              <span>Tax:</span>
-              <span>Calculated at checkout</span>
-            </div>
-            <div class="summary-row total">
-              <span>Total:</span>
-              <span id="cartTotal">$0.00</span>
-            </div>
-            <button class="checkout-btn" id="checkoutBtn">Proceed to Checkout</button>
-            <a href="/storepage" class="continue-shopping">← Continue Shopping</a>
           </div>
         </div>
       </div>
@@ -216,6 +382,24 @@
     const cartTotalEl = document.getElementById('cartTotal');
     const subtotalEl = document.getElementById('subtotal');
     const checkoutBtn = document.getElementById('checkoutBtn');
+    const fulfillmentLabel = document.getElementById('fulfillmentLabel');
+    const deliveryNote = document.getElementById('deliveryNote');
+
+    let deliveryMethod = localStorage.getItem('checkout_delivery_method') === 'pickup' ? 'pickup' : 'shipping';
+
+    function syncDeliveryUI() {
+      document.querySelectorAll('.delivery-option').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.method === deliveryMethod);
+      });
+
+      if (deliveryMethod === 'pickup') {
+        fulfillmentLabel.textContent = 'Pickup';
+        deliveryNote.textContent = 'Pick up from our location. You will choose pickup contact details in checkout.';
+      } else {
+        fulfillmentLabel.textContent = 'Shipping';
+        deliveryNote.textContent = 'Ship to your address. Delivery details are confirmed in checkout.';
+      }
+    }
 
     async function loadCart() {
       try {
@@ -314,10 +498,19 @@
     };
 
     checkoutBtn.addEventListener('click', () => {
-      window.location.href = appUrl('/checkout');
+      localStorage.setItem('checkout_delivery_method', deliveryMethod);
+      window.location.href = appUrl('/checkout?method=' + encodeURIComponent(deliveryMethod));
+    });
+
+    document.querySelectorAll('.delivery-option').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        deliveryMethod = btn.dataset.method === 'pickup' ? 'pickup' : 'shipping';
+        syncDeliveryUI();
+      });
     });
 
     // Load cart on page load
+    syncDeliveryUI();
     loadCart();
 
     // Page transition

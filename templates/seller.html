@@ -6,139 +6,155 @@
   <title>Seller Dashboard — The Black Whale</title>
   <script src="../static/app-routing.js"></script>
   <script src="../static/nav-auth.js" defer></script>
-  <link rel="stylesheet" href="../static/style.css">
+  <link rel="stylesheet" href="/static/style.css">
   <style>
-    .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px; }
-    .stat-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border-radius: 12px; padding: 20px; text-align: center; color: white; }
-    .stat-card .stat-number { font-size: 36px; font-weight: 700; display: block; }
-    .stat-card .stat-label { font-size: 14px; opacity: 0.8; }
-    .dash-section { background: rgba(255,255,255,0.92); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-    .dash-section h2 { margin-top: 0; font-size: 18px; color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-bottom: 16px; }
-    .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    .data-table th { background: #f5f5f5; padding: 10px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; }
-    .data-table td { padding: 10px; border-bottom: 1px solid #eee; }
-    .data-table tr:hover { background: #fafafa; }
-    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; }
-    .status-pending { background: #fff3cd; color: #856404; }
-    .status-confirmed { background: #cce5ff; color: #004085; }
-    .status-denied { background: #f8d7da; color: #721c24; }
-    .status-handed_to_delivery { background: #d1ecf1; color: #0c5460; }
-    .status-shipped { background: #d4edda; color: #155724; }
-    .action-btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; margin: 2px; }
-    .btn-confirm { background: #4CAF50; color: white; }
-    .btn-deny { background: #f44336; color: white; }
-    .btn-ship { background: #2196F3; color: white; }
-    .btn-deliver { background: #9C27B0; color: white; }
-    .empty-state { text-align: center; padding: 30px; color: #999; }
-    .quick-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
-    .quick-action-btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-block; }
+    .dash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.8rem; }
+    .stat-tile { background: linear-gradient(145deg, rgba(7,16,30,0.88), rgba(12,22,40,0.76)); border: 1px solid rgba(148,163,184,0.16); border-radius: 1rem; padding: 1.2rem 1.3rem; display: flex; flex-direction: column; gap: 0.25rem; }
+    .stat-tile .stat-value { font-size: 2rem; font-weight: 700; font-family: var(--font-heading); color: #7dd3fc; line-height: 1; }
+    .stat-tile .stat-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; color: #64748b; }
+    .dash-section { background: linear-gradient(180deg, rgba(12,21,36,0.88), rgba(9,15,27,0.84)); border: 1px solid rgba(148,163,184,0.14); border-radius: 1.1rem; padding: 1.4rem 1.5rem; margin-bottom: 1.4rem; }
+    .dash-section h2 { margin: 0 0 1rem; font-size: 1.05rem; font-family: var(--font-heading); color: #e2e8f0; border-bottom: 1px solid rgba(148,163,184,0.12); padding-bottom: 0.7rem; }
+    .dash-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .dash-table th { text-align: left; padding: 0.6rem 0.75rem; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b; border-bottom: 1px solid rgba(148,163,184,0.12); }
+    .dash-table td { padding: 0.75rem; border-bottom: 1px solid rgba(148,163,184,0.07); color: #cbd5e1; vertical-align: middle; }
+    .dash-table tr:last-child td { border-bottom: none; }
+    .dash-table tr:hover td { background: rgba(56,189,248,0.04); }
+    .status-pill { display: inline-block; padding: 0.22rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; }
+    .pill-pending   { background: rgba(251,191,36,0.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+    .pill-confirmed { background: rgba(56,189,248,0.12);  color: #7dd3fc; border: 1px solid rgba(56,189,248,0.28); }
+    .pill-shipped   { background: rgba(74,222,128,0.12);  color: #86efac; border: 1px solid rgba(74,222,128,0.28); }
+    .pill-denied    { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.28); }
+    .action-btn { padding: 0.28rem 0.7rem; border: none; border-radius: 999px; cursor: pointer; font-size: 0.78rem; font-weight: 600; margin: 0 2px; transition: opacity 0.15s ease; }
+    .action-btn:hover { opacity: 0.82; }
+    .btn-confirm { background: rgba(74,222,128,0.2);  color: #86efac; border: 1px solid rgba(74,222,128,0.35); }
+    .btn-deny    { background: rgba(248,113,113,0.18); color: #f87171; border: 1px solid rgba(248,113,113,0.35); }
+    .btn-ship    { background: rgba(56,189,248,0.18);  color: #7dd3fc; border: 1px solid rgba(56,189,248,0.35); }
+    .btn-deliver { background: rgba(167,139,250,0.18); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.35); }
+    .dash-empty { text-align: center; padding: 2rem 1rem; color: #475569; font-size: 0.9rem; }
+    .dash-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.8rem; }
+    .stock-bar { height: 4px; border-radius: 2px; background: rgba(148,163,184,0.12); overflow: hidden; margin-top: 4px; width: 80px; }
+    .stock-bar-fill { height: 100%; border-radius: 2px; }
+    .listing-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+    .listing-link { color: #7dd3fc; font-weight: 600; text-decoration: none; }
+    .listing-link.muted { color: #64748b; pointer-events: none; }
+    .mini-btn { padding: 0.32rem 0.65rem; border-radius: 999px; border: 1px solid rgba(148,163,184,0.2); background: rgba(15,23,42,0.85); color: #e2e8f0; cursor: pointer; font-size: 0.8rem; }
+    .mini-btn:hover { border-color: rgba(56,189,248,0.35); background: rgba(56,189,248,0.1); }
+    .mini-btn.danger { border-color: rgba(248,113,113,0.35); color: #fca5a5; }
+    .mini-btn.danger:hover { background: rgba(248,113,113,0.14); }
+    .mini-btn:disabled { opacity: 0.6; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <video class="background-video" autoplay loop muted playsinline preload="auto">
-    <source src="../static/whalebackground.mp4" type="video/mp4">
+    <source src="/static/whalebackground.mp4" type="video/mp4">
   </video>
   <div class="page-frame">
     <header class="site-header">
       <a class="site-brand" href="/">
-        <img class="site-logo" src="../static/newblackwhale.png" alt="The Black Whale logo">
+        <img class="site-logo" src="/static/newblackwhale.png" alt="The Black Whale logo">
         <span>The Black Whale</span>
       </a>
       <nav class="site-nav">
-        <a href="/inventory">Inventory</a>
-        <a href="/itemeditor">Item editor</a>
-        <a href="/logout">Logout</a>
+        <a href="/shop">Store</a>
+        <a href="/itemeditor">Add Listing</a>
+        <a href="/logout">Sign Out</a>
       </nav>
     </header>
     <main class="page-shell">
-      <section class="panel hero">
+      <section class="panel hero" style="margin-bottom:1.6rem;">
         <div>
           <h1 class="section-title">Seller Dashboard</h1>
-          <p class="section-copy">Manage your listings, confirm orders, and track shipments.</p>
+          <p class="section-copy">Your listings, incoming orders, and shipment queue — only your inventory.</p>
         </div>
       </section>
-      <section class="panel">
-        <!-- Stats -->
-        <div class="dash-grid" id="statsGrid">
-          <div class="stat-card"><span class="stat-number" id="statProducts">—</span><span class="stat-label">Active Listings</span></div>
-          <div class="stat-card"><span class="stat-number" id="statPending">—</span><span class="stat-label">Pending Orders</span></div>
-          <div class="stat-card"><span class="stat-number" id="statConfirmed">—</span><span class="stat-label">Confirmed Orders</span></div>
-          <div class="stat-card"><span class="stat-number" id="statRevenue">—</span><span class="stat-label">Total Revenue</span></div>
-        </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-          <a href="/itemeditor" class="quick-action-btn button-primary" style="background:#4CAF50;color:white;">+ Add New Listing</a>
-          <a href="/storepage" class="quick-action-btn button-secondary" style="background:#ddd;color:#333;">View Store</a>
-        </div>
+      <!-- Stats -->
+      <div class="dash-stats">
+        <div class="stat-tile"><span class="stat-value" id="statListings">—</span><span class="stat-label">Active Listings</span></div>
+        <div class="stat-tile"><span class="stat-value" id="statPending">—</span><span class="stat-label">Pending Orders</span></div>
+        <div class="stat-tile"><span class="stat-value" id="statConfirmed">—</span><span class="stat-label">Confirmed Orders</span></div>
+        <div class="stat-tile"><span class="stat-value" id="statRevenue">—</span><span class="stat-label">Total Revenue</span></div>
+      </div>
 
-        <!-- Pending Orders -->
-        <div class="dash-section">
-          <h2>Orders Awaiting Action</h2>
-          <div id="pendingOrdersContainer">
-            <div class="empty-state">Loading orders...</div>
-          </div>
-        </div>
+      <!-- Quick actions -->
+      <div class="dash-actions">
+        <a href="/itemeditor" class="button button-primary">+ Add New Listing</a>
+        <a href="/shop" class="button button-secondary">View Store →</a>
+      </div>
 
-        <!-- My Listings -->
-        <div class="dash-section">
-          <h2>My Listings</h2>
-          <div id="myListingsContainer">
-            <div class="empty-state">Loading listings...</div>
-          </div>
-        </div>
-      </section>
+      <!-- Orders needing action -->
+      <div class="dash-section">
+        <h2>Orders Awaiting Action</h2>
+        <div id="pendingOrdersWrap"><div class="dash-empty">Loading orders…</div></div>
+      </div>
+
+      <!-- Ready to ship (hidden until data confirms it's needed) -->
+      <div class="dash-section" id="shipSection" style="display:none;">
+        <h2>Ready to Ship</h2>
+        <div id="shipWrap"></div>
+      </div>
+
+      <!-- My listings -->
+      <div class="dash-section">
+        <h2>My Listings</h2>
+        <div id="listingsWrap"><div class="dash-empty">Loading listings…</div></div>
+      </div>
     </main>
     <footer class="site-footer">© 2026 The Black Whale</footer>
   </div>
-  <div class="page-transition-overlay active">
-  </div>
+  <div class="page-transition-overlay active"></div>
   <script>
-    (function() {
+    (function () {
       const overlay = document.querySelector('.page-transition-overlay');
       window.addEventListener('pageshow', () => {
         document.body.classList.remove('transitioning');
         overlay.classList.remove('active');
       });
 
+      function stockBar(qty, max) {
+        const pct = Math.min(100, Math.max(0, (qty / (max || 1)) * 100));
+        const color = pct > 50 ? '#7dd3fc' : pct > 20 ? '#fbbf24' : '#f87171';
+        return `<div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${color};"></div></div>`;
+      }
+
       async function loadDashboard() {
         try {
           const [ordersRes, productsRes] = await Promise.all([
             fetch(appUrl('/api/vendor/orders')),
-            fetch(appUrl('/api/store-products'))
+            fetch(appUrl('/api/vendor/my-products'))
           ]);
           const ordersData = ordersRes.ok ? await ordersRes.json() : { orders: [] };
           const productsData = productsRes.ok ? await productsRes.json() : { products: [] };
 
           const orders = ordersData.orders || [];
-          const allProducts = productsData.products || [];
+          const myProducts = productsData.products || [];
 
-          // Stats
-          const pendingItems = orders.flatMap(o => o.items).filter(i => i.vendor_confirmation_status === 'pending');
-          const confirmedItems = orders.flatMap(o => o.items).filter(i => i.vendor_confirmation_status === 'confirmed');
-          const revenue = orders.flatMap(o => o.items)
+          const allItems = orders.flatMap(o => o.items || []);
+          const pendingItems = allItems.filter(i => i.vendor_confirmation_status === 'pending');
+          const confirmedItems = allItems.filter(i => i.vendor_confirmation_status === 'confirmed');
+          const revenue = allItems
             .filter(i => i.vendor_confirmation_status !== 'denied')
-            .reduce((sum, i) => sum + i.price_at_order * i.quantity, 0);
+            .reduce((sum, i) => sum + (i.price_at_order || 0) * (i.quantity || 0), 0);
 
-          document.getElementById('statProducts').textContent = allProducts.length;
+          document.getElementById('statListings').textContent = myProducts.length;
           document.getElementById('statPending').textContent = pendingItems.length;
           document.getElementById('statConfirmed').textContent = confirmedItems.length;
           document.getElementById('statRevenue').textContent = '$' + revenue.toFixed(2);
 
-          // Pending orders table
-          const pendingContainer = document.getElementById('pendingOrdersContainer');
-          const actionableOrders = orders.filter(o => o.items.some(i => i.vendor_confirmation_status === 'pending'));
-          if (actionableOrders.length === 0) {
-            pendingContainer.innerHTML = '<div class="empty-state">No pending orders. You\'re all caught up!</div>';
+          // Pending orders
+          const pendingWrap = document.getElementById('pendingOrdersWrap');
+          const pendingOrders = orders.filter(o => (o.items || []).some(i => i.vendor_confirmation_status === 'pending'));
+          if (!pendingOrders.length) {
+            pendingWrap.innerHTML = '<div class="dash-empty">No pending orders — you\'re all caught up.</div>';
           } else {
             let rows = '';
-            actionableOrders.forEach(order => {
-              order.items.filter(i => i.vendor_confirmation_status === 'pending').forEach(item => {
+            pendingOrders.forEach(order => {
+              (order.items || []).filter(i => i.vendor_confirmation_status === 'pending').forEach(item => {
                 rows += `<tr>
-                  <td>#${order.order_id}</td>
-                  <td>${order.customer_name}</td>
+                  <td><strong>#${order.order_id}</strong></td>
+                  <td>${order.customer_name || '—'}</td>
                   <td>${item.product_title}</td>
-                  <td>${item.quantity} × $${item.price_at_order.toFixed(2)}</td>
+                  <td>${item.quantity} × $${Number(item.price_at_order).toFixed(2)}</td>
                   <td>${new Date(order.order_date).toLocaleDateString()}</td>
                   <td>
                     <button class="action-btn btn-confirm" onclick="updateOrder(${item.order_item_id},'confirm')">Confirm</button>
@@ -147,24 +163,25 @@
                 </tr>`;
               });
             });
-            pendingContainer.innerHTML = `<table class="data-table">
-              <thead><tr><th>Order</th><th>Customer</th><th>Product</th><th>Value</th><th>Date</th><th>Actions</th></tr></thead>
-              <tbody>${rows}</tbody></table>`;
+            pendingWrap.innerHTML = `<div class="table-wrap"><table class="dash-table">
+              <thead><tr><th>Order</th><th>Customer</th><th>Product</th><th>Value</th><th>Date</th><th>Action</th></tr></thead>
+              <tbody>${rows}</tbody></table></div>`;
           }
 
-          // All orders (non-pending for tracking)
-          const shippableOrders = orders.filter(o => o.items.some(i => i.vendor_confirmation_status === 'confirmed' && i.item_status === 'confirmed'));
-          if (shippableOrders.length > 0) {
-            const pendingSection = document.getElementById('pendingOrdersContainer');
-            let extraRows = '';
-            shippableOrders.forEach(order => {
-              order.items.filter(i => i.item_status === 'confirmed').forEach(item => {
-                extraRows += `<tr>
-                  <td>#${order.order_id}</td>
-                  <td>${order.customer_name}</td>
+          // Ready to ship
+          const shipOrders = orders.filter(o => (o.items || []).some(i => i.vendor_confirmation_status === 'confirmed' && i.item_status === 'confirmed'));
+          const shipSection = document.getElementById('shipSection');
+          if (shipOrders.length) {
+            shipSection.style.display = '';
+            let rows = '';
+            shipOrders.forEach(order => {
+              (order.items || []).filter(i => i.item_status === 'confirmed').forEach(item => {
+                rows += `<tr>
+                  <td><strong>#${order.order_id}</strong></td>
+                  <td>${order.customer_name || '—'}</td>
                   <td>${item.product_title}</td>
-                  <td>${item.quantity} × $${item.price_at_order.toFixed(2)}</td>
-                  <td><span class="status-badge status-confirmed">Confirmed</span></td>
+                  <td>${item.quantity} × $${Number(item.price_at_order).toFixed(2)}</td>
+                  <td><span class="status-pill pill-confirmed">Confirmed</span></td>
                   <td>
                     <button class="action-btn btn-ship" onclick="updateOrder(${item.order_item_id},'ship')">Mark Shipped</button>
                     <button class="action-btn btn-deliver" onclick="updateOrder(${item.order_item_id},'deliver')">Mark Delivered</button>
@@ -172,36 +189,78 @@
                 </tr>`;
               });
             });
-            const existing = pendingContainer.querySelector('table');
-            if (existing) {
-              existing.querySelector('tbody').innerHTML += extraRows;
-            }
+            document.getElementById('shipWrap').innerHTML = `<div class="table-wrap"><table class="dash-table">
+              <thead><tr><th>Order</th><th>Customer</th><th>Product</th><th>Value</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>${rows}</tbody></table></div>`;
           }
 
           // My listings
-          const listingsContainer = document.getElementById('myListingsContainer');
-          if (allProducts.length === 0) {
-            listingsContainer.innerHTML = '<div class="empty-state">No listings yet. <a href="/itemeditor">Add your first item →</a></div>';
+          const listingsWrap = document.getElementById('listingsWrap');
+          if (!myProducts.length) {
+            listingsWrap.innerHTML = '<div class="dash-empty">No listings yet. <a href="/itemeditor" style="color:#7dd3fc;">Add your first item →</a></div>';
           } else {
-            let listRows = '';
-            allProducts.forEach(p => {
-              listRows += `<tr>
+            const maxStock = Math.max(...myProducts.map(p => p.inventory || 0), 1);
+            let rows = '';
+            myProducts.forEach(p => {
+              const isActive = !!p.is_active;
+              rows += `<tr>
                 <td><strong>${p.title}</strong></td>
                 <td>$${Number(p.price).toFixed(2)}</td>
-                <td>${p.inventory} in stock</td>
-                <td><a href="${appUrl('/product/' + p.product_id)}" style="color:#4CAF50;font-weight:600;">View →</a></td>
+                <td>
+                  <span style="color:${p.inventory > 5 ? '#86efac' : p.inventory > 0 ? '#fbbf24' : '#f87171'};font-weight:600;">${p.inventory}</span> in stock
+                  ${stockBar(p.inventory, maxStock)}
+                </td>
+                <td>
+                  <div class="listing-actions">
+                    <a class="listing-link ${isActive ? '' : 'muted'}" href="${isActive ? appUrl('/product/' + p.product_id) : '#'}">View</a>
+                    <a class="listing-link" href="${appUrl('/itemeditor?edit=' + p.product_id)}">Edit</a>
+                    <button class="mini-btn danger" data-delete-product="${p.product_id}" ${isActive ? '' : 'disabled'}>${isActive ? 'Delete' : 'Removed'}</button>
+                  </div>
+                </td>
               </tr>`;
             });
-            listingsContainer.innerHTML = `<table class="data-table">
-              <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Link</th></tr></thead>
-              <tbody>${listRows}</tbody></table>`;
+            listingsWrap.innerHTML = `<div class="table-wrap"><table class="dash-table">
+              <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
+              <tbody>${rows}</tbody></table></div>`;
+
+            listingsWrap.querySelectorAll('[data-delete-product]').forEach((button) => {
+              button.addEventListener('click', async () => {
+                const productId = button.getAttribute('data-delete-product');
+                if (!productId) {
+                  return;
+                }
+
+                const confirmed = window.confirm('Remove this listing from the market? Customers will no longer see it.');
+                if (!confirmed) {
+                  return;
+                }
+
+                button.disabled = true;
+                const original = button.textContent;
+                button.textContent = 'Removing...';
+
+                try {
+                  const res = await fetch(appUrl('/api/vendor/products/' + productId), { method: 'DELETE' });
+                  const data = await res.json();
+                  if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to remove product');
+                  }
+
+                  loadDashboard();
+                } catch (err) {
+                  alert(err.message || 'Failed to remove product');
+                  button.disabled = false;
+                  button.textContent = original;
+                }
+              });
+            });
           }
-        } catch(err) {
-          document.getElementById('pendingOrdersContainer').innerHTML = `<div class="empty-state">Error loading data: ${err.message}</div>`;
+        } catch (err) {
+          document.getElementById('pendingOrdersWrap').innerHTML = `<div class="dash-empty">Error loading dashboard: ${err.message}</div>`;
         }
       }
 
-      window.updateOrder = async function(orderItemId, action) {
+      window.updateOrder = async function (orderItemId, action) {
         try {
           const res = await fetch(appUrl('/api/vendor/orders/' + orderItemId), {
             method: 'PUT',
@@ -209,12 +268,9 @@
             body: JSON.stringify({ action })
           });
           const data = await res.json();
-          if (res.ok) {
-            loadDashboard();
-          } else {
-            alert(data.message || 'Action failed');
-          }
-        } catch(err) {
+          if (res.ok) { loadDashboard(); }
+          else { alert(data.message || 'Action failed.'); }
+        } catch (err) {
           alert('Error: ' + err.message);
         }
       };

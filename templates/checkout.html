@@ -9,34 +9,64 @@
   <link rel="stylesheet" href="../static/style.css">
   <style>
     .checkout-container {
-      max-width: 900px;
+      max-width: 960px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 1.5rem 1.2rem;
+    }
+    .delivery-toggle {
+      display: flex;
+      gap: 0.8rem;
+      margin-bottom: 2rem;
+      padding: 1.2rem;
+      background: linear-gradient(145deg, rgba(7,16,30,0.88), rgba(12,22,40,0.76));
+      border: 1px solid rgba(148,163,184,0.14);
+      border-radius: 1rem;
+    }
+    .delivery-option {
+      flex: 1;
+      padding: 0.9rem 1.2rem;
+      border: 2px solid rgba(148,163,184,0.2);
+      border-radius: 0.8rem;
+      background: rgba(15,23,42,0.7);
+      color: #cbd5e1;
+      cursor: pointer;
+      text-align: center;
+      font-weight: 600;
+      transition: all 0.25s ease;
+    }
+    .delivery-option:hover {
+      border-color: rgba(148,163,184,0.4);
+      background: rgba(15,23,42,0.95);
+    }
+    .delivery-option.active {
+      background: #7dd3fc;
+      border-color: #7dd3fc;
+      color: #082f49;
     }
     .checkout-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
-      gap: 30px;
-      margin-top: 20px;
+      gap: 1.8rem;
     }
     .form-section {
-      background: #f9f9f9;
-      padding: 20px;
-      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(12,21,36,0.88), rgba(9,15,27,0.84));
+      border: 1px solid rgba(148,163,184,0.14);
+      padding: 1.5rem;
+      border-radius: 1.1rem;
     }
     .form-section h2 {
-      margin-top: 0;
-      font-size: 18px;
-      color: #333;
-      border-bottom: 2px solid #4CAF50;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
+      margin: 0 0 1.2rem;
+      font-size: 1.05rem;
+      font-family: var(--font-heading);
+      color: #e2e8f0;
+      border-bottom: 1px solid rgba(148,163,184,0.12);
+      padding-bottom: 0.7rem;
     }
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin-bottom: 15px;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
     .form-row.full {
       grid-template-columns: 1fr;
@@ -44,136 +74,147 @@
     .form-group {
       display: flex;
       flex-direction: column;
+      gap: 0.45rem;
     }
     .form-group label {
       font-weight: 600;
-      margin-bottom: 6px;
-      color: #333;
-      font-size: 14px;
+      color: #cbd5e1;
+      font-size: 0.92rem;
     }
     .form-group input,
     .form-group select {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
+      padding: 0.8rem 0.95rem;
+      border: 1px solid rgba(148,163,184,0.18);
+      border-radius: 0.8rem;
+      font-size: 0.95rem;
+      background: rgba(15,23,42,0.84);
+      color: #f8fafc;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
       font-family: inherit;
     }
     .form-group input:focus,
     .form-group select:focus {
-      outline: none;
-      border-color: #4CAF50;
-      box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+      border-color: rgba(56,189,248,0.48);
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.09);
+      background: rgba(15,23,42,0.96);
+    }
+    .form-group input:-webkit-autofill,
+    .form-group input:-webkit-autofill:hover,
+    .form-group input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.95) inset;
+      -webkit-text-fill-color: #f8fafc;
+      transition: background-color 5000s ease-in-out 0s;
     }
     .order-summary {
-      background: #f9f9f9;
-      padding: 20px;
-      border-radius: 8px;
-      max-height: fit-content;
+      background: linear-gradient(180deg, rgba(12,21,36,0.88), rgba(9,15,27,0.84));
+      border: 1px solid rgba(148,163,184,0.14);
+      padding: 1.5rem;
+      border-radius: 1.1rem;
+      height: fit-content;
       position: sticky;
-      top: 20px;
+      top: 8rem;
     }
     .summary-title {
       font-weight: 600;
-      font-size: 16px;
-      margin-bottom: 15px;
-      color: #333;
+      font-size: 1rem;
+      font-family: var(--font-heading);
+      margin-bottom: 1.2rem;
+      color: #e2e8f0;
+      border-bottom: 1px solid rgba(148,163,184,0.12);
+      padding-bottom: 0.7rem;
     }
     .summary-items {
-      margin-bottom: 20px;
-      border-bottom: 2px solid #eee;
-      padding-bottom: 15px;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.2rem;
+      border-bottom: 1px solid rgba(148,163,184,0.12);
     }
     .summary-item {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
-      font-size: 14px;
-    }
-    .summary-item-title {
-      flex: 1;
+      padding: 0.7rem 0;
+      font-size: 0.92rem;
+      color: #cbd5e1;
     }
     .summary-item-price {
       font-weight: 600;
+      color: #7dd3fc;
     }
     .summary-total {
       display: flex;
       justify-content: space-between;
       font-weight: 700;
-      font-size: 18px;
-      color: #333;
-      padding: 15px 0;
+      font-size: 1.1rem;
+      color: #f8fafc;
     }
-    .payment-methods {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .payment-method {
-      flex: 1;
-      padding: 10px;
-      border: 2px solid #ddd;
-      border-radius: 6px;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.3s;
-    }
-    .payment-method input[type="radio"] {
-      display: none;
-    }
-    .payment-method input[type="radio"]:checked + label {
-      border-color: #4CAF50;
-      background: #e8f5e9;
-    }
-    .payment-method label {
-      display: block;
-      cursor: pointer;
-      margin: 0;
-      font-weight: 600;
+    .demo-note {
+      background: rgba(56,189,248,0.1);
+      border: 1px solid rgba(56,189,248,0.3);
+      color: #bae6fd;
+      padding: 0.8rem 1rem;
+      border-radius: 0.8rem;
+      font-size: 0.85rem;
+      margin-bottom: 1.2rem;
     }
     .error-message {
-      background: #ffebee;
-      color: #c62828;
-      padding: 12px;
-      border-radius: 4px;
-      margin-bottom: 20px;
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: #fca5a5;
+      padding: 0.95rem 1.2rem;
+      border-radius: 0.8rem;
+      margin-bottom: 1.2rem;
       display: none;
     }
     .success-message {
-      background: #e8f5e9;
-      color: #2e7d32;
-      padding: 12px;
-      border-radius: 4px;
-      margin-bottom: 20px;
+      background: rgba(74,222,128,0.1);
+      border: 1px solid rgba(74,222,128,0.3);
+      color: #86efac;
+      padding: 0.95rem 1.2rem;
+      border-radius: 0.8rem;
+      margin-bottom: 1.2rem;
       display: none;
     }
     .checkout-btn {
       width: 100%;
-      padding: 14px;
-      background: #4CAF50;
-      color: white;
+      padding: 0.95rem 1.5rem;
+      background: var(--accent-strong);
+      color: #fff;
       border: none;
-      border-radius: 6px;
-      font-size: 16px;
+      border-radius: 999px;
+      font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 20px;
+      margin-top: 1.5rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 12px 24px rgba(14, 165, 233, 0.24);
     }
     .checkout-btn:hover {
-      background: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(14, 165, 233, 0.4), 0 0 20px rgba(14, 165, 233, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.1);
+    }
+    .checkout-btn:active {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(14, 165, 233, 0.3), 0 0 15px rgba(14, 165, 233, 0.5);
     }
     .checkout-btn:disabled {
-      background: #ccc;
+      background: #64748b;
       cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
     }
     .back-link {
       display: inline-block;
-      margin-top: 15px;
-      color: #007bff;
+      margin-top: 1rem;
+      color: #7dd3fc;
       text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s ease;
     }
     .back-link:hover {
-      text-decoration: underline;
+      color: #bae6fd;
+    }
+    .hidden {
+      display: none !important;
     }
     @media (max-width: 768px) {
       .checkout-grid {
@@ -184,6 +225,14 @@
       }
       .form-row {
         grid-template-columns: 1fr;
+      }
+      .delivery-toggle {
+        gap: 0.5rem;
+        padding: 1rem;
+      }
+      .delivery-option {
+        font-size: 0.9rem;
+        padding: 0.8rem 1rem;
       }
     }
   </style>
@@ -200,9 +249,6 @@
         <span>The Black Whale</span>
       </a>
       <nav class="site-nav">
-        <a href="/inventory">Inventory</a>
-        <a href="/seller">Seller</a>
-        <a href="/logout">Logout</a>
       </nav>
     </header>
     <main class="page-shell">
@@ -212,10 +258,20 @@
         <div id="errorMessage" class="error-message"></div>
         <div id="successMessage" class="success-message"></div>
 
+        <!-- Delivery Method Toggle -->
+        <div class="delivery-toggle">
+          <button class="delivery-option active" data-method="shipping">
+            Ship to Address
+          </button>
+          <button class="delivery-option" data-method="pickup">
+            Local Pickup
+          </button>
+        </div>
+
         <div class="checkout-grid">
           <div>
             <!-- Shipping Address -->
-            <div class="form-section">
+            <div class="form-section" id="shippingSection">
               <h2>Shipping Address</h2>
               <div class="form-row full">
                 <div class="form-group">
@@ -251,14 +307,31 @@
               </div>
             </div>
 
+            <!-- Pickup Info -->
+            <div class="form-section hidden" id="pickupSection">
+              <h2>Local Pickup</h2>
+              <div class="form-row full">
+                <div class="form-group">
+                  <label for="pickupName">Full Name *</label>
+                  <input type="text" id="pickupName" required>
+                </div>
+              </div>
+              <div class="form-row full">
+                <div class="form-group">
+                  <label for="pickupPhone">Phone Number *</label>
+                  <input type="tel" id="pickupPhone" required>
+                </div>
+              </div>
+              <div class="demo-note">
+                Pickup orders are typically ready within 2 business hours. Bring your order confirmation and a valid ID.
+              </div>
+            </div>
+
             <!-- Payment Information -->
-            <div class="form-section" style="margin-top: 20px;">
+            <div class="form-section" style="margin-top: 1.5rem;">
               <h2>Payment Information</h2>
-              <div style="margin-bottom: 20px;">
-                <strong style="display: block; margin-bottom: 10px;">Demo Payment</strong>
-                <p style="font-size: 14px; color: #666; margin: 0;">
-                  This is a demo checkout. Use any card number format (e.g., 4111 1111 1111 1111).
-                </p>
+              <div class="demo-note">
+                Demo payment mode: use any card format (example: 4111 1111 1111 1111).
               </div>
               <div class="form-row full">
                 <div class="form-group">
@@ -313,6 +386,51 @@
     const orderItemsDiv = document.getElementById('orderItems');
     const orderTotalEl = document.getElementById('orderTotal');
     const placeOrderBtn = document.getElementById('placeOrderBtn');
+    const shippingSection = document.getElementById('shippingSection');
+    const pickupSection = document.getElementById('pickupSection');
+    const overlay = document.querySelector('.page-transition-overlay');
+    let deliveryMethod = 'shipping';
+
+    window.addEventListener('pageshow', () => {
+      document.body.classList.remove('transitioning');
+      if (overlay) {
+        overlay.classList.remove('active');
+      }
+    });
+
+    function updateMethodSections() {
+      if (deliveryMethod === 'shipping') {
+        shippingSection.classList.remove('hidden');
+        pickupSection.classList.add('hidden');
+      } else {
+        shippingSection.classList.add('hidden');
+        pickupSection.classList.remove('hidden');
+      }
+    }
+
+    function initDeliveryMethod() {
+      const params = new URLSearchParams(window.location.search);
+      const fromQuery = params.get('method');
+      const fromStorage = localStorage.getItem('checkout_delivery_method');
+      const candidate = (fromQuery || fromStorage || 'shipping').toLowerCase();
+
+      deliveryMethod = candidate === 'pickup' ? 'pickup' : 'shipping';
+      document.querySelectorAll('.delivery-option').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.method === deliveryMethod);
+      });
+      updateMethodSections();
+    }
+
+    // Delivery method toggle
+    document.querySelectorAll('.delivery-option').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.delivery-option').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        deliveryMethod = this.dataset.method;
+        localStorage.setItem('checkout_delivery_method', deliveryMethod);
+        updateMethodSections();
+      });
+    });
 
     // Load cart items for review
     async function loadOrderSummary() {
@@ -351,6 +469,7 @@
         const response = await fetch(appUrl('/api/user/profile'));
         const data = await response.json();
         document.getElementById('fullName').value = data.name || '';
+        document.getElementById('pickupName').value = data.name || '';
         document.getElementById('cardName').value = data.name || '';
       } catch (error) {
         console.log('Could not prefill profile');
@@ -384,81 +503,76 @@
 
     placeOrderBtn.addEventListener('click', async () => {
       // Validation
-      const fullName = document.getElementById('fullName').value.trim();
-      const address = document.getElementById('address').value.trim();
-      const city = document.getElementById('city').value.trim();
-      const state = document.getElementById('state').value.trim();
-      const zip = document.getElementById('zip').value.trim();
       const cardName = document.getElementById('cardName').value.trim();
       const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
       const expiry = document.getElementById('expiry').value;
       const cvv = document.getElementById('cvv').value;
+      let name, phone, address, city, state, zip;
 
-      if (!fullName || !address || !city || !state || !zip || !cardName || !cardNumber || !expiry || !cvv) {
-        errorMsg.textContent = 'Please fill in all required fields';
+      if (deliveryMethod === 'shipping') {
+        name = document.getElementById('fullName').value.trim();
+        address = document.getElementById('address').value.trim();
+        city = document.getElementById('city').value.trim();
+        state = document.getElementById('state').value.trim();
+        zip = document.getElementById('zip').value.trim();
+
+        if (!name || !address || !city || !state || !zip) {
+          errorMsg.textContent = 'Please fill in all shipping address fields';
+          errorMsg.style.display = 'block';
+          return;
+        }
+      } else {
+        name = document.getElementById('pickupName').value.trim();
+        phone = document.getElementById('pickupPhone').value.trim();
+
+        if (!name || !phone) {
+          errorMsg.textContent = 'Please fill in your name and phone number';
+          errorMsg.style.display = 'block';
+          return;
+        }
+      }
+
+      if (!cardName || !cardNumber || !expiry || !cvv) {
+        errorMsg.textContent = 'Please fill in all payment fields';
         errorMsg.style.display = 'block';
         return;
       }
-
-      if (cardNumber.length < 13 || cardNumber.length > 19) {
-        errorMsg.textContent = 'Please enter a valid card number';
-        errorMsg.style.display = 'block';
-        return;
-      }
-
-      if (!expiry.match(/^\d{2}\/\d{2}$/)) {
-        errorMsg.textContent = 'Please enter expiry in MM/YY format';
-        errorMsg.style.display = 'block';
-        return;
-      }
-
-      if (cvv.length !== 3) {
-        errorMsg.textContent = 'Please enter a valid CVV';
-        errorMsg.style.display = 'block';
-        return;
-      }
-
-      placeOrderBtn.disabled = true;
-      errorMsg.style.display = 'none';
 
       try {
-        // Process payment (demo - just checkout)
+        const orderData = {
+          delivery_method: deliveryMethod,
+          shipping_address: deliveryMethod === 'shipping' ? { name, address, city, state, zip } : null,
+          pickup_info: deliveryMethod === 'pickup' ? { name, phone } : null,
+          card_info: { cardName, cardNumber: cardNumber.slice(-4) }
+        };
+
         const response = await fetch(appUrl('/api/checkout'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            shipping_address: { fullName, address, city, state, zip },
-            payment_method: 'card'
-          })
+          body: JSON.stringify(orderData)
         });
-        
+
         const data = await response.json();
-        if (response.ok && data.redirect) {
-          successMsg.textContent = 'Order placed successfully! Redirecting...';
+
+        if (response.ok) {
+          successMsg.textContent = 'Order placed successfully! Order ID: ' + (data.order_id || 'N/A');
           successMsg.style.display = 'block';
-          setTimeout(() => {
-            window.location.href = appUrl(data.redirect);
-          }, 1500);
+          placeOrderBtn.disabled = true;
+          localStorage.removeItem('checkout_delivery_method');
+          setTimeout(() => window.location.href = appUrl('/account'), 2000);
         } else {
-          throw new Error(data.message || 'Checkout failed');
+          errorMsg.textContent = data.message || 'Order placement failed';
+          errorMsg.style.display = 'block';
         }
       } catch (error) {
-        errorMsg.textContent = error.message;
+        errorMsg.textContent = 'Error placing order: ' + error.message;
         errorMsg.style.display = 'block';
-        placeOrderBtn.disabled = false;
       }
     });
 
-    // Initialize
+    initDeliveryMethod();
     loadOrderSummary();
     prefillProfile();
-
-    // Page transition
-    const overlay = document.querySelector('.page-transition-overlay');
-    window.addEventListener('pageshow', () => {
-      document.body.classList.remove('transitioning');
-      overlay.classList.remove('active');
-    });
   </script>
 </body>
 </html>

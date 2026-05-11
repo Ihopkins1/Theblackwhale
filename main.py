@@ -4,8 +4,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from functools import wraps
+from sqlalchemy import text
 import os
 import uuid
+import json
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce_db.db'
@@ -52,6 +54,7 @@ class Product(db.Model):
     description = db.Column(db.Text, nullable=False)
     warranty_period_months = db.Column(db.Integer)
     inventory = db.Column(db.Integer, default=0, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -164,6 +167,8 @@ class Order(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False, index=True)
     order_date = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(30), default='pending', index=True)  # 'pending', 'confirmed', 'handed_to_delivery', 'shipped'
+    fulfillment_method = db.Column(db.String(20), default='shipping', nullable=False)
+    fulfillment_details = db.Column(db.Text)
     total_price = db.Column(db.Numeric(12, 2))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -335,11 +340,68 @@ def serialize_product(product):
         'description': product.description,
         'price': product_price_value(product),
         'inventory': product.inventory,
+        'is_active': bool(product.is_active),
         'image_url': primary_image.image_url if primary_image else 'https://images.unsplash.com/photo-1535591273668-578e31182c4f?auto=format&fit=crop&w=1200&q=80',
         'seller_name': product.vendor.name if product.vendor else 'Unknown Seller',
         'estimated_delivery': '3-7 days',
         'nutritional_value': product.nutrition.nutritional_value if product.nutrition else 'Nutritional information unavailable'
     }
+
+
+def serialize_admin_product(product):
+    return {
+        'product_id': product.product_id,
+        'title': product.title,
+        'sku': f'BW-{product.product_id:04d}',
+        'inventory': product.inventory,
+        'price': product_price_value(product),
+        'seller_name': product.vendor.name if product.vendor else 'Unknown Seller',
+        'status': 'active' if product.is_active else 'removed'
+    }
+
+
+def get_vendor_owned_product(product_id, vendor_id):
+    return Product.query.filter_by(product_id=product_id, vendor_id=vendor_id).first()
+
+
+def soft_remove_product(product):
+    product.is_active = False
+    product.inventory = 0
+
+    for cart_item in CartItem.query.filter_by(product_id=product.product_id).all():
+        db.session.delete(cart_item)
+
+    for price in ProductPrice.query.filter_by(product_id=product.product_id).all():
+        price.is_active = False
+
+
+def apply_schema_compatibility_patches():
+    # Backfill columns that may be missing in older local SQLite files.
+    with db.engine.begin() as conn:
+        user_columns = {
+            row[1] for row in conn.execute(text("PRAGMA table_info(users)")).fetchall()
+        }
+
+        if 'phone_number' not in user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN phone_number VARCHAR(20)"))
+
+        product_columns = {
+            row[1] for row in conn.execute(text("PRAGMA table_info(products)")).fetchall()
+        }
+
+        if 'is_active' not in product_columns:
+            conn.execute(text("ALTER TABLE products ADD COLUMN is_active BOOLEAN DEFAULT 1"))
+            conn.execute(text("UPDATE products SET is_active = 1 WHERE is_active IS NULL"))
+
+        order_columns = {
+            row[1] for row in conn.execute(text("PRAGMA table_info(orders)")).fetchall()
+        }
+
+        if 'fulfillment_method' not in order_columns:
+            conn.execute(text("ALTER TABLE orders ADD COLUMN fulfillment_method VARCHAR(20) DEFAULT 'shipping'"))
+
+        if 'fulfillment_details' not in order_columns:
+            conn.execute(text("ALTER TABLE orders ADD COLUMN fulfillment_details TEXT"))
 
 
 def seed_sample_products():
@@ -357,44 +419,44 @@ def seed_sample_products():
 
     sample_products = [
         {
-            'title': 'Atlantic Salmon Fillet',
-            'description': 'Fresh-cut salmon fillet with rich flavor and smooth texture. Great for grilling, baking, or meal prep.',
-            'inventory': 25,
-            'price': 18.99,
-            'nutritional_value': 'Per 100g: Protein 20g, Fat 13g, Omega-3 2.3g, Calories 208',
-            'image_url': 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=1200&q=80'
+            'title': 'Live Spiny Lobster',
+            'description': 'Premium live spiny lobster held in oxygenated tanks and packed for rapid cold-chain dispatch.',
+            'inventory': 8,
+            'price': 64.9,
+            'nutritional_value': 'Per 100g: Protein 19g, Fat 1.2g, Zinc 3.5mg, Calories 92',
+            'image_url': 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?auto=format&fit=crop&w=1200&q=80'
         },
         {
-            'title': 'Yellowfin Tuna Steak',
-            'description': 'Lean premium tuna steak with a firm bite. Perfect for searing or serving rare.',
+            'title': 'Yellowfin Tuna Loin Steak',
+            'description': 'Sashimi-grade yellowfin loin steak with deep ruby color and clean ocean flavor, trimmed for premium raw portions.',
             'inventory': 18,
-            'price': 21.5,
-            'nutritional_value': 'Per 100g: Protein 24g, Fat 5g, Omega-3 0.6g, Calories 144',
-            'image_url': 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=1200&q=80'
+            'price': 29.5,
+            'nutritional_value': 'Per 100g: Protein 24g, Fat 4.8g, Omega-3 0.5g, Calories 141',
+            'image_url': 'https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=1200&q=80'
         },
         {
-            'title': 'Whole Red Snapper',
-            'description': 'Whole cleaned red snapper, ideal for roasting or steaming with herbs and citrus.',
-            'inventory': 12,
-            'price': 26.0,
-            'nutritional_value': 'Per 100g: Protein 20g, Fat 1.3g, Potassium 444mg, Calories 100',
-            'image_url': 'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=1200&q=80'
+            'title': 'Live Mud Crab',
+            'description': 'Exotic live mud crab selected to order, packed humid and cool for short-haul freshness.',
+            'inventory': 14,
+            'price': 42.0,
+            'nutritional_value': 'Per 100g: Protein 19g, Fat 1.6g, Selenium 38mcg, Calories 97',
+            'image_url': 'https://images.unsplash.com/photo-1618424181497-157f25b6ddd5?auto=format&fit=crop&w=1200&q=80'
         },
         {
-            'title': 'Arctic Char Portions',
-            'description': 'Delicate char portions with buttery texture and mild taste, perfect for pan searing.',
-            'inventory': 16,
-            'price': 19.75,
-            'nutritional_value': 'Per 100g: Protein 19g, Fat 11g, Vitamin D 12mcg, Calories 190',
-            'image_url': 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?auto=format&fit=crop&w=1200&q=80'
+            'title': 'Premium Salmon Belly Strips',
+            'description': 'Rich marbled salmon belly strips cut fresh for sashimi, curing, and premium seafood assortments.',
+            'inventory': 22,
+            'price': 23.8,
+            'nutritional_value': 'Per 100g: Protein 19g, Fat 15g, Omega-3 2.8g, Calories 230',
+            'image_url': 'https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?auto=format&fit=crop&w=1200&q=80'
         },
         {
-            'title': 'Mahi Mahi Cutlets',
-            'description': 'Firm, lean mahi mahi cutlets for tacos, grilling, and fast weeknight dinners.',
-            'inventory': 20,
-            'price': 17.4,
-            'nutritional_value': 'Per 100g: Protein 20g, Fat 1g, Selenium 37mcg, Calories 85',
-            'image_url': 'https://images.unsplash.com/photo-1543332164-6e82f355bad5?auto=format&fit=crop&w=1200&q=80'
+            'title': 'Bluefin Collar Meat (Kama)',
+            'description': 'Dense, high-marbled bluefin collar meat cut for premium fresh seafood programs and export quality lots.',
+            'inventory': 10,
+            'price': 47.25,
+            'nutritional_value': 'Per 100g: Protein 21g, Fat 13g, Iron 1.1mg, Calories 208',
+            'image_url': 'https://images.unsplash.com/photo-1611171711791-b34f2ce0f3ef?auto=format&fit=crop&w=1200&q=80'
         }
     ]
 
@@ -423,6 +485,10 @@ def seed_sample_products():
                 discount_type='none',
                 is_active=True
             ))
+        else:
+            active_price.current_price = item['price']
+            if not active_price.original_price:
+                active_price.original_price = item['price']
 
         nutrition = ProductNutrition.query.filter_by(product_id=product.product_id).first()
         if not nutrition:
@@ -430,6 +496,8 @@ def seed_sample_products():
                 product_id=product.product_id,
                 nutritional_value=item['nutritional_value']
             ))
+        else:
+            nutrition.nutritional_value = item['nutritional_value']
 
         image = ProductImage.query.filter_by(product_id=product.product_id).first()
         if not image:
@@ -438,6 +506,10 @@ def seed_sample_products():
                 image_url=item['image_url'],
                 display_order=1
             ))
+        else:
+            image.image_url = item['image_url']
+            if not image.display_order:
+                image.display_order = 1
 
     db.session.commit()
 
@@ -447,15 +519,20 @@ def index():
     return render_template('storepage.html')
 
 
+@app.route('/storepage')
+def storepage_redirect():
+    return redirect(url_for('shop'))
+
+
 @app.route('/api/store-products')
 def store_products():
-    products = Product.query.order_by(Product.created_at.desc()).all()
-    return jsonify({'success': True, 'products': [serialize_product(product) for product in products]}), 200
+    products = Product.query.filter_by(is_active=True).order_by(Product.created_at.desc()).all()
+    return jsonify({'success': True, 'products': [serialize_product(p) for p in products]}), 200
 
 
 @app.route('/product/<int:product_id>')
 def product_page(product_id):
-    product = Product.query.filter_by(product_id=product_id).first_or_404()
+    product = Product.query.filter_by(product_id=product_id, is_active=True).first_or_404()
     return render_template('product.html', product=serialize_product(product))
 
 
@@ -536,6 +613,10 @@ def account():
 @app.route('/about')
 def about():
     return render_template('about.html')
+
+@app.route('/shop')
+def shop():
+    return render_template('shop.html')
 
 @app.route('/login')
 def login():
@@ -650,6 +731,153 @@ def create_product():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Failed to create product: {str(e)}'}), 500
+
+
+@app.route('/api/vendor/products/<int:product_id>', methods=['GET'])
+@require_role('vendor')
+def get_vendor_product(product_id):
+    vendor_id = session.get('user_id')
+    product = get_vendor_owned_product(product_id, vendor_id)
+    if not product:
+        return jsonify({'success': False, 'message': 'Product not found'}), 404
+
+    image = ProductImage.query.filter_by(product_id=product.product_id)
+    image = image.order_by(ProductImage.display_order.asc(), ProductImage.image_id.asc()).first()
+    nutrition = ProductNutrition.query.filter_by(product_id=product.product_id).first()
+    active_price = ProductPrice.query.filter_by(product_id=product.product_id, is_active=True)
+    active_price = active_price.order_by(ProductPrice.updated_at.desc()).first()
+
+    return jsonify({
+        'success': True,
+        'product': {
+            'product_id': product.product_id,
+            'title': product.title,
+            'description': product.description,
+            'inventory': product.inventory,
+            'price': float(active_price.current_price) if active_price else 0.0,
+            'nutritional_value': nutrition.nutritional_value if nutrition else '',
+            'image_url': image.image_url if image else '',
+            'is_active': bool(product.is_active)
+        }
+    }), 200
+
+
+@app.route('/api/vendor/products/<int:product_id>', methods=['PUT'])
+@require_role('vendor')
+def update_vendor_product(product_id):
+    vendor_id = session.get('user_id')
+    product = get_vendor_owned_product(product_id, vendor_id)
+    if not product:
+        return jsonify({'success': False, 'message': 'Product not found'}), 404
+
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        data = request.form
+        image_file = request.files.get('image')
+    else:
+        data = request.get_json() or {}
+        image_file = None
+
+    title = str(data.get('title', '')).strip()
+    description = str(data.get('description', '')).strip()
+    nutritional_value = str(data.get('nutritional_value', '')).strip()
+    price = data.get('price')
+    stock = data.get('stock', 0)
+
+    if not title or not description:
+        return jsonify({'success': False, 'message': 'Title and description are required'}), 400
+
+    try:
+        numeric_price = float(price)
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'message': 'A valid price is required'}), 400
+
+    try:
+        stock_value = int(stock)
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'message': 'A valid stock value is required'}), 400
+
+    if numeric_price < 0 or stock_value < 0:
+        return jsonify({'success': False, 'message': 'Price and stock cannot be negative'}), 400
+
+    try:
+        product.title = title
+        product.description = description
+        product.inventory = stock_value
+        product.is_active = True
+
+        price_row = ProductPrice.query.filter_by(product_id=product.product_id, is_active=True)
+        price_row = price_row.order_by(ProductPrice.updated_at.desc()).first()
+        if price_row:
+            price_row.current_price = numeric_price
+            if not price_row.original_price:
+                price_row.original_price = numeric_price
+        else:
+            db.session.add(ProductPrice(
+                product_id=product.product_id,
+                current_price=numeric_price,
+                original_price=numeric_price,
+                discount_type='none',
+                is_active=True
+            ))
+
+        nutrition_row = ProductNutrition.query.filter_by(product_id=product.product_id).first()
+        if nutrition_row:
+            nutrition_row.nutritional_value = nutritional_value or nutrition_row.nutritional_value
+        else:
+            db.session.add(ProductNutrition(
+                product_id=product.product_id,
+                nutritional_value=nutritional_value or 'Per serving: Protein-rich seafood source'
+            ))
+
+        if image_file and image_file.filename and allowed_file(image_file.filename):
+            ext = image_file.filename.rsplit('.', 1)[1].lower()
+            safe_name = f"{uuid.uuid4().hex}.{ext}"
+            save_path = os.path.join(UPLOAD_FOLDER, safe_name)
+            image_file.save(save_path)
+            image_url = f'/static/uploads/{safe_name}'
+
+            image_row = ProductImage.query.filter_by(product_id=product.product_id)
+            image_row = image_row.order_by(ProductImage.display_order.asc(), ProductImage.image_id.asc()).first()
+            if image_row:
+                image_row.image_url = image_url
+                if not image_row.display_order:
+                    image_row.display_order = 1
+            else:
+                db.session.add(ProductImage(
+                    product_id=product.product_id,
+                    image_url=image_url,
+                    display_order=1
+                ))
+
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': 'Product updated',
+            'redirect': url_for('product_page', product_id=product.product_id)
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Failed to update product: {str(e)}'}), 500
+
+
+@app.route('/api/vendor/products/<int:product_id>', methods=['DELETE'])
+@require_role('vendor')
+def delete_vendor_product(product_id):
+    vendor_id = session.get('user_id')
+    product = get_vendor_owned_product(product_id, vendor_id)
+    if not product:
+        return jsonify({'success': False, 'message': 'Product not found'}), 404
+
+    try:
+        if not product.is_active:
+            return jsonify({'success': True, 'message': 'Product is already removed from market'}), 200
+
+        soft_remove_product(product)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Product removed from market'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Failed to delete product: {str(e)}'}), 500
 
 
 @app.route('/session-info')
@@ -880,6 +1108,25 @@ def remove_from_cart(cart_item_id):
 def api_checkout():
     user_id = session.get('user_id')
     data = request.get_json() or {}
+    delivery_method = (data.get('delivery_method') or 'shipping').strip().lower()
+
+    if delivery_method not in {'shipping', 'pickup'}:
+        return jsonify({'success': False, 'message': 'Invalid delivery method'}), 400
+
+    if delivery_method == 'shipping':
+        shipping_address = data.get('shipping_address') or {}
+        required_fields = ['name', 'address', 'city', 'state', 'zip']
+        missing = [field for field in required_fields if not str(shipping_address.get(field, '')).strip()]
+        if missing:
+            return jsonify({'success': False, 'message': 'Missing shipping fields: ' + ', '.join(missing)}), 400
+        fulfillment_details = shipping_address
+    else:
+        pickup_info = data.get('pickup_info') or {}
+        required_fields = ['name', 'phone']
+        missing = [field for field in required_fields if not str(pickup_info.get(field, '')).strip()]
+        if missing:
+            return jsonify({'success': False, 'message': 'Missing pickup fields: ' + ', '.join(missing)}), 400
+        fulfillment_details = pickup_info
     
     cart = Cart.query.filter_by(customer_id=user_id).first()
     if not cart or not cart.items:
@@ -893,7 +1140,13 @@ def api_checkout():
     
     try:
         # Create order
-        order = Order(customer_id=user_id, total_price=total, status='pending')
+        order = Order(
+            customer_id=user_id,
+            total_price=total,
+            status='pending',
+            fulfillment_method=delivery_method,
+            fulfillment_details=json.dumps(fulfillment_details)
+        )
         db.session.add(order)
         db.session.flush()
         
@@ -946,11 +1199,20 @@ def get_user_orders():
             'order_id': order.order_id,
             'order_date': order.order_date.isoformat(),
             'status': order.status,
+            'fulfillment_method': order.fulfillment_method,
             'total_price': float(order.total_price),
             'item_count': len(order.items)
         })
     
     return jsonify({'orders': result}), 200
+
+@app.route('/api/vendor/my-products', methods=['GET'])
+@require_role('vendor')
+def get_vendor_products():
+    user_id = session.get('user_id')
+    products = Product.query.filter_by(vendor_id=user_id).order_by(Product.created_at.desc()).all()
+    return jsonify({'success': True, 'products': [serialize_product(p) for p in products]}), 200
+
 
 @app.route('/api/vendor/orders', methods=['GET'])
 @require_role('vendor')
@@ -1058,7 +1320,7 @@ def get_all_users():
 def get_admin_stats():
     total_users = User.query.count()
     total_orders = Order.query.count()
-    total_products = Product.query.count()
+    total_products = Product.query.filter_by(is_active=True).count()
     pending_orders = Order.query.filter_by(status='pending').count()
     total_revenue = db.session.query(db.func.sum(Order.total_price)).scalar() or 0
     return jsonify({
@@ -1068,6 +1330,32 @@ def get_admin_stats():
         'pending_orders': pending_orders,
         'total_revenue': float(total_revenue)
     }), 200
+
+
+@app.route('/api/admin/products', methods=['GET'])
+@require_role('admin')
+def get_admin_products():
+    products = Product.query.order_by(Product.created_at.desc()).all()
+    return jsonify({'success': True, 'products': [serialize_admin_product(p) for p in products]}), 200
+
+
+@app.route('/api/admin/products/<int:product_id>', methods=['DELETE'])
+@require_role('admin')
+def remove_product_from_market(product_id):
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({'success': False, 'message': 'Product not found'}), 404
+
+    if not product.is_active:
+        return jsonify({'success': True, 'message': 'Product is already removed from market'}), 200
+
+    try:
+        soft_remove_product(product)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Product removed from market'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Failed to remove product: {str(e)}'}), 500
 
 @app.route('/api/user/profile', methods=['GET'])
 @require_role('customer', 'vendor', 'admin')
@@ -1115,9 +1403,18 @@ def order_detail_page(order_id):
     order = Order.query.get(order_id)
     if not order:
         return render_template('error.html', message='Order not found'), 404
-    
+
+    user_id = session.get('user_id')
+    role = session.get('role')
+
     # Check authorization
-    if session.get('user_id') != order.customer_id and session.get('role') not in ['admin', 'vendor']:
+    if role == 'admin':
+        pass
+    elif role == 'vendor':
+        vendor_has_item = OrderItem.query.filter_by(order_id=order.order_id, vendor_id=user_id).first() is not None
+        if not vendor_has_item:
+            return redirect(url_for('index'))
+    elif user_id != order.customer_id:
         return redirect(url_for('index'))
     
     return render_template('order-detail.html', order=order)
@@ -1130,5 +1427,6 @@ def logout():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        apply_schema_compatibility_patches()
         seed_sample_products()
     app.run(debug=True)

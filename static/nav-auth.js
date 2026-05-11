@@ -64,8 +64,9 @@
         return null;
       }
 
-      if (cleaned === '/' || /\/templates\/storepage\.html$/i.test(cleaned)) return 'store';
+      if (cleaned === '/' || cleaned === '/shop' || /\/templates\/(storepage|shop)\.html$/i.test(cleaned)) return 'store';
       if (cleaned === '/about' || /\/templates\/about\.html$/i.test(cleaned)) return 'about';
+      if (cleaned === '/cart' || /\/templates\/cart\.html$/i.test(cleaned)) return 'cart';
       if (cleaned === '/inventory' || /\/templates\/inventory\.html$/i.test(cleaned)) return 'inventory';
       if (cleaned === '/seller' || /\/templates\/seller\.html$/i.test(cleaned)) return 'seller';
       if (cleaned === '/itemeditor' || /\/templates\/itemeditor\.html$/i.test(cleaned)) return 'itemeditor';
@@ -113,7 +114,7 @@
     var isAdmin = role === 'admin';
     var isSeller = role === 'vendor';
 
-    ensureLink(nav, 'store', 'Store Page', '/');
+    ensureLink(nav, 'store', 'Shop', '/shop');
     ensureLink(nav, 'about', 'About Us', '/about');
     ensureLink(nav, 'cart', 'Cart', '/cart');
 
@@ -163,10 +164,10 @@
       if (loggedIn) {
         var roleLabel = isAdmin ? 'Admin' : (isSeller ? 'Seller' : 'Customer');
         pageTitle.textContent = 'Welcome back, ' + (sessionData.username || 'User');
-        pageCopy.textContent = 'Signed in as ' + roleLabel + '. Your navigation is tailored to your account permissions.';
+        pageCopy.textContent = 'Signed in as ' + roleLabel + '. Review live bait availability, cut inventory, and current seafood dispatch windows.';
       } else {
         pageTitle.textContent = 'Welcome to The Black Whale';
-        pageCopy.textContent = 'Sign in to unlock role-based tools and personalized navigation.';
+        pageCopy.textContent = 'Browse live bait and fresh-cut inventory, then sign in to place and track orders.';
       }
     }
   }

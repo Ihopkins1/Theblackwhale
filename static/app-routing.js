@@ -89,6 +89,47 @@
     ensureNavAuthScript();
   }
 
+  function ensureTransitionMedia() {
+    const overlays = document.querySelectorAll('.page-transition-overlay');
+    if (!overlays.length) {
+      return;
+    }
+
+    overlays.forEach((overlay) => {
+      if (overlay.querySelector('video, img')) {
+        return;
+      }
+
+      overlay.innerHTML = [
+        '<video autoplay muted playsinline preload="auto" loop>',
+        '  <source src="' + appUrl('/static/my_logo_video.mp4') + '" type="video/mp4">',
+        '</video>',
+        '<img src="' + appUrl('/static/newblackwhale.png') + '" alt="The Black Whale logo">'
+      ].join('');
+
+      const video = overlay.querySelector('video');
+      const fallbackImage = overlay.querySelector('img');
+      if (!video || !fallbackImage) {
+        return;
+      }
+
+      fallbackImage.style.display = 'none';
+      const showFallback = () => {
+        video.style.display = 'none';
+        fallbackImage.style.display = 'block';
+      };
+
+      video.addEventListener('error', showFallback);
+      video.addEventListener('stalled', showFallback);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureTransitionMedia);
+  } else {
+    ensureTransitionMedia();
+  }
+
   if (!shouldRewriteRootRelative) {
     return;
   }

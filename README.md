@@ -1,6 +1,6 @@
 # The Black Whale
 
-This repository contains the FINALPROJECT180 e-commerce site for The Black Whale.
+The Black Whale is a role-based e-commerce site for seafood and live bait listings.
 
 Team members:
 - Adonis Pearson
@@ -8,14 +8,17 @@ Team members:
 - Kayron Brown
 - Byron Ross Jr.
 
-Recent updates and improvements:
-- Added role-based account creation with support for user, seller, and admin account types.
-- Added admin credential validation for admin signups (credential: blackwhale).
-- Updated auth redirects so seller accounts route to seller dashboard pages.
-- Added safer client-side error handling for sign-in and register flows.
-- Added shared route helper logic for local preview/Live Preview navigation compatibility.
-- Added a root index page for GitHub Pages so the site has a proper landing page.
+## Overview
 
-Notes:
+The site supports customer, vendor, and admin workflows, including product browsing, account creation, cart and checkout handling, vendor listings, and admin inventory management.
+
+## Running the app
+
+1. Activate the virtual environment.
+2. Start the Flask app from `main.py`.
+3. Open the local site in your browser.
+
+## Notes
+
 - Static pages can be browsed directly from GitHub Pages.
-- Dynamic actions (sign in, register, role-based redirects) require the Flask backend to be running.
+- Dynamic actions like sign in, register, role-based redirects, and inventory updates require the Flask backend to be running.

@@ -63,6 +63,7 @@
         </div>
         <div class="button-row">
           <button id="saveProductButton" class="button button-primary" type="button">Save product</button>
+          <button id="deleteProductButton" class="button button-secondary" type="button" style="display:none;">Delete product</button>
           <button class="button button-secondary" type="button" onclick="window.location.href=appUrl('/seller')">Cancel</button>
         </div>
       </section>
@@ -98,10 +99,45 @@
       });
 
       const saveButton = document.getElementById('saveProductButton');
+      const deleteButton = document.getElementById('deleteProductButton');
       const editorMessage = document.getElementById('editorMessage');
       const imageInput = document.getElementById('productImage');
       const imagePreview = document.getElementById('imagePreview');
       const previewImg = document.getElementById('previewImg');
+      const params = new URLSearchParams(window.location.search);
+      const editProductId = params.get('edit');
+      let currentImageUrl = '';
+
+      async function loadProductForEdit(productId) {
+        try {
+          const response = await fetch(appUrl('/api/vendor/products/' + productId));
+          const data = await response.json();
+          if (!response.ok || !data.success || !data.product) {
+            throw new Error(data.message || 'Unable to load product');
+          }
+
+          const product = data.product;
+          document.querySelector('.section-copy').textContent = 'Edit this product and keep the listing current.';
+          document.title = 'Edit Product — The Black Whale';
+          document.getElementById('title').value = product.title || '';
+          document.getElementById('price').value = product.price ?? '';
+          document.getElementById('stock').value = product.inventory ?? '';
+          document.getElementById('nutrition').value = product.nutritional_value || '';
+          document.getElementById('description').value = product.description || '';
+          saveButton.textContent = 'Update product';
+          deleteButton.style.display = 'inline-flex';
+          currentImageUrl = product.image_url || '';
+          if (currentImageUrl) {
+            previewImg.src = currentImageUrl;
+            imagePreview.style.display = 'block';
+          }
+        } catch (error) {
+          editorMessage.textContent = error.message || 'Unable to load product for editing.';
+          editorMessage.style.display = 'block';
+          saveButton.disabled = true;
+          deleteButton.disabled = true;
+        }
+      }
 
       imageInput.addEventListener('change', () => {
         const file = imageInput.files[0];
@@ -133,6 +169,7 @@
         }
 
         saveButton.disabled = true;
+        deleteButton.disabled = true;
 
         try {
           const formData = new FormData();
@@ -145,8 +182,8 @@
             formData.append('image', imageInput.files[0]);
           }
 
-          const response = await fetch(appUrl('/api/products'), {
-            method: 'POST',
+          const response = await fetch(appUrl(editProductId ? '/api/vendor/products/' + editProductId : '/api/products'), {
+            method: editProductId ? 'PUT' : 'POST',
             body: formData
           });
 
@@ -160,10 +197,47 @@
           editorMessage.textContent = error.message || 'Failed to save product.';
           editorMessage.style.display = 'block';
           saveButton.disabled = false;
+          deleteButton.disabled = false;
+        }
+      }
+
+      async function deleteProduct() {
+        if (!editProductId) {
+          return;
+        }
+
+        const confirmed = window.confirm('Remove this product from the market? It will no longer be visible to customers.');
+        if (!confirmed) {
+          return;
+        }
+
+        deleteButton.disabled = true;
+        saveButton.disabled = true;
+
+        try {
+          const response = await fetch(appUrl('/api/vendor/products/' + editProductId), {
+            method: 'DELETE'
+          });
+          const data = await response.json();
+          if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Failed to delete product.');
+          }
+
+          window.location.href = appUrl('/seller');
+        } catch (error) {
+          editorMessage.textContent = error.message || 'Failed to delete product.';
+          editorMessage.style.display = 'block';
+          saveButton.disabled = false;
+          deleteButton.disabled = false;
         }
       }
 
       saveButton.addEventListener('click', saveProduct);
+      deleteButton.addEventListener('click', deleteProduct);
+
+      if (editProductId) {
+        loadProductForEdit(editProductId);
+      }
     })();
   </script>
 </body>

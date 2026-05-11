@@ -7,6 +7,53 @@
   <script src="../static/app-routing.js"></script>
   <script src="../static/nav-auth.js" defer></script>
   <link rel="stylesheet" href="../static/style.css">
+  <style>
+    .inventory-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .inventory-btn {
+      border: 1px solid rgba(248, 113, 113, 0.4);
+      background: rgba(248, 113, 113, 0.14);
+      color: #fca5a5;
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .inventory-btn:hover {
+      background: rgba(248, 113, 113, 0.24);
+    }
+
+    .inventory-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .inventory-status {
+      min-height: 1.5rem;
+      margin: 0 0 0.85rem;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .inventory-status.error {
+      color: #fca5a5;
+    }
+
+    .inventory-status.success {
+      color: #86efac;
+    }
+
+    .badge-removed {
+      color: #fca5a5;
+      background: rgba(248, 113, 113, 0.14);
+    }
+  </style>
 </head>
 <body>
   <video class="background-video" autoplay loop muted playsinline preload="auto">
@@ -32,24 +79,20 @@
         </div>
       </section>
       <section class="panel table-wrap">
+        <p id="inventoryStatus" class="inventory-status">Loading inventory...</p>
         <table class="table">
           <thead>
             <tr>
               <th>Item</th>
               <th>SKU</th>
+              <th>Seller</th>
               <th>Stock</th>
               <th>Price</th>
               <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td>Example item</td>
-              <td>BW-001</td>
-              <td>24</td>
-              <td>$34.00</td>
-              <td><span class="badge">In stock</span></td>
-            </tr>
+          <tbody id="inventoryRows">
           </tbody>
         </table>
       </section>
@@ -83,6 +126,95 @@
         document.body.classList.remove('transitioning');
         overlay.classList.remove('active');
       });
+
+      const statusEl = document.getElementById('inventoryStatus');
+      const rowsEl = document.getElementById('inventoryRows');
+
+      function setStatus(message, kind) {
+        statusEl.textContent = message || '';
+        statusEl.classList.remove('error', 'success');
+        if (kind) {
+          statusEl.classList.add(kind);
+        }
+      }
+
+      function renderRows(products) {
+        rowsEl.innerHTML = '';
+
+        if (!products.length) {
+          rowsEl.innerHTML = '<tr><td colspan="7">No products found.</td></tr>';
+          return;
+        }
+
+        products.forEach((product) => {
+          const row = document.createElement('tr');
+          const isRemoved = product.status === 'removed';
+          const badgeClass = isRemoved ? 'badge badge-removed' : 'badge';
+          const badgeLabel = isRemoved ? 'Removed' : 'In market';
+
+          row.innerHTML = `
+            <td>${product.title}</td>
+            <td>${product.sku}</td>
+            <td>${product.seller_name}</td>
+            <td>${Number(product.inventory || 0)}</td>
+            <td>$${Number(product.price || 0).toFixed(2)}</td>
+            <td><span class="${badgeClass}">${badgeLabel}</span></td>
+            <td>
+              <div class="inventory-actions">
+                <button class="inventory-btn" data-product-id="${product.product_id}" ${isRemoved ? 'disabled' : ''}>
+                  ${isRemoved ? 'Removed' : 'Remove from market'}
+                </button>
+              </div>
+            </td>
+          `;
+
+          const button = row.querySelector('.inventory-btn');
+          if (button && !isRemoved) {
+            button.addEventListener('click', async () => {
+              button.disabled = true;
+              button.textContent = 'Removing...';
+              try {
+                const response = await fetch(appUrl('/api/admin/products/' + product.product_id), {
+                  method: 'DELETE'
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                  throw new Error(data.message || 'Failed to remove item');
+                }
+                setStatus(data.message || 'Product removed from market', 'success');
+                await loadInventory();
+              } catch (error) {
+                setStatus(error.message, 'error');
+                button.disabled = false;
+                button.textContent = 'Remove from market';
+              }
+            });
+          }
+
+          rowsEl.appendChild(row);
+        });
+      }
+
+      async function loadInventory() {
+        try {
+          const response = await fetch(appUrl('/api/admin/products'));
+          const data = await response.json();
+
+          if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Failed to load inventory');
+          }
+
+          renderRows(data.products || []);
+          if (!statusEl.classList.contains('success')) {
+            setStatus('Inventory synced');
+          }
+        } catch (error) {
+          setStatus(error.message, 'error');
+          rowsEl.innerHTML = '<tr><td colspan="7">Could not load inventory right now.</td></tr>';
+        }
+      }
+
+      loadInventory();
     })();
   </script>
 </body>

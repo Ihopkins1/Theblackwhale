@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop — The Black Whale</title>
+  <script src="../static/app-routing.js"></script>
+  <script src="../static/nav-auth.js" defer></script>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .shop-header-bar {
+      background: linear-gradient(135deg, rgba(2,6,23,0.95) 0%, rgba(7,14,26,0.9) 100%);
+      border-bottom: 1px solid rgba(125,211,252,0.18);
+      padding: 2.4rem 1rem 1.8rem;
+      text-align: center;
+    }
+    .shop-header-bar h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(1.7rem, 2.4vw, 2.6rem);
+      font-family: var(--font-heading);
+      background: linear-gradient(135deg, #f8fafc 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .shop-header-bar p {
+      margin: 0 auto;
+      max-width: 42rem;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      line-height: 1.75;
+    }
+    .shop-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.4rem;
+    }
+    .shop-filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .shop-filter {
+      border: 1px solid rgba(148,163,184,0.22);
+      background: rgba(15,23,42,0.7);
+      color: #cbd5e1;
+      border-radius: 999px;
+      padding: 0.42rem 0.82rem;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .shop-filter:hover:not(.active) {
+      border-color: rgba(148,163,184,0.46);
+      background: rgba(15,23,42,0.92);
+      color: #e2e8f0;
+    }
+    .shop-filter.active {
+      color: #082f49;
+      background: #7dd3fc;
+      border-color: #7dd3fc;
+      font-weight: 700;
+    }
+    .shop-search {
+      border: 1px solid rgba(148,163,184,0.25);
+      border-radius: 0.8rem;
+      background: rgba(15,23,42,0.82);
+      color: #f8fafc;
+      padding: 0.62rem 0.9rem;
+      outline: none;
+      min-width: 220px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .shop-search:focus {
+      border-color: rgba(56,189,248,0.52);
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
+      background: rgba(15,23,42,0.96);
+    }
+    .shop-result-count {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin-bottom: 0.6rem;
+    }
+    #shopGrid {
+      min-height: 200px;
+    }
+    .shop-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #64748b;
+    }
+    .shop-empty h3 { color: #94a3b8; margin: 0 0 0.4rem; }
+    @media (max-width: 600px) {
+      .shop-controls { flex-direction: column; align-items: stretch; }
+      .shop-search { min-width: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <video class="background-video" autoplay loop muted playsinline preload="auto">
+    <source src="/static/whalebackground.mp4" type="video/mp4">
+  </video>
+  <div class="page-frame">
+    <header class="site-header">
+      <a class="site-brand" href="/">
+        <img class="site-logo" src="/static/newblackwhale.png" alt="The Black Whale logo">
+        <span>The Black Whale</span>
+      </a>
+      <nav class="site-nav" id="mainNav">
+        <a href="/">Home</a>
+        <a href="/shop">Shop</a>
+        <a href="/about">About</a>
+        <a href="/cart">Cart</a>
+      </nav>
+    </header>
+
+    <div class="shop-header-bar">
+      <h1>Full Inventory</h1>
+      <p>Browse all available live bait, fresh-cut bait, and premium seafood. Stock is updated as vendors list new items.</p>
+    </div>
+
+    <main class="page-shell">
+      <div class="shop-controls">
+        <div class="shop-filter-group" role="tablist" aria-label="Filter products">
+          <button class="shop-filter active" data-filter="all" type="button">All Products</button>
+          <button class="shop-filter" data-filter="live" type="button">Live Catches</button>
+          <button class="shop-filter" data-filter="cut" type="button">Premium Cuts</button>
+        </div>
+        <input id="shopSearch" class="shop-search" type="search" placeholder="Search species, cuts, seafood…" aria-label="Search products">
+      </div>
+      <p class="shop-result-count" id="resultCount"></p>
+      <div id="shopGrid" class="grid"></div>
+    </main>
+
+    <footer class="site-footer">© 2026 The Black Whale</footer>
+  </div>
+  <div class="page-transition-overlay active"></div>
+
+  <script>
+    (function () {
+      const overlay = document.querySelector('.page-transition-overlay');
+      window.addEventListener('pageshow', () => {
+        document.body.classList.remove('transitioning');
+        overlay.classList.remove('active');
+      });
+
+      let allProducts = [];
+      let activeFilter = 'all';
+      let searchTerm = '';
+
+      function isLive(p) {
+        return /live|lobster|crab|eel|grouper/i.test((p.title || '') + ' ' + (p.description || ''));
+      }
+
+      function renderProductCard(product) {
+        const card = document.createElement('article');
+        card.className = 'card product-card';
+        const live = isLive(product);
+        const kindLabel = live ? 'Live Catch' : 'Premium Cut';
+        const kindClass = live ? 'live' : '';
+        card.innerHTML = `
+          <img class="card-image" src="${product.image_url || '/static/newblackwhale.png'}" alt="${product.title}" loading="lazy">
+          <div class="product-card-body">
+            <h3>${product.title}</h3>
+            <div class="product-meta">
+              <span class="product-kind ${kindClass}">${kindLabel}</span>
+              <p class="product-price">$${Number(product.price).toFixed(2)}</p>
+            </div>
+            <p class="product-desc">${product.description}</p>
+            <p class="product-subline">${product.estimated_delivery || '3–7 days'} · ${Number(product.inventory || 0)} units available</p>
+            <div class="product-actions">
+              <a class="button button-primary" href="${appUrl('/product/' + product.product_id)}" style="text-align:center;">View</a>
+              <button class="button button-secondary quick-add-btn" data-id="${product.product_id}">+ Cart</button>
+            </div>
+          </div>
+        `;
+        const btn = card.querySelector('.quick-add-btn');
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          btn.textContent = 'Adding…';
+          try {
+            const res = await fetch(appUrl('/api/cart'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ product_id: product.product_id, quantity: 1 })
+            });
+            if (res.status === 401) { window.location.href = appUrl('/sign-in'); return; }
+            const data = await res.json();
+            if (res.ok) {
+              btn.textContent = '✓ Added';
+              setTimeout(() => { btn.textContent = '+ Cart'; btn.disabled = false; }, 1800);
+            } else {
+              alert(data.message || 'Could not add to cart.');
+              btn.textContent = '+ Cart'; btn.disabled = false;
+            }
+          } catch (e) {
+            alert('Error: ' + e.message);
+            btn.textContent = '+ Cart'; btn.disabled = false;
+          }
+        });
+        return card;
+      }
+
+      function applyFilters() {
+        let filtered = allProducts.slice();
+        if (activeFilter === 'live') filtered = filtered.filter(isLive);
+        else if (activeFilter === 'cut') filtered = filtered.filter(p => !isLive(p));
+        if (searchTerm) {
+          const q = searchTerm.toLowerCase();
+          filtered = filtered.filter(p =>
+            (p.title || '').toLowerCase().includes(q) ||
+            (p.description || '').toLowerCase().includes(q)
+          );
+        }
+        const grid = document.getElementById('shopGrid');
+        const count = document.getElementById('resultCount');
+        grid.innerHTML = '';
+        count.textContent = filtered.length === allProducts.length
+          ? `${filtered.length} product${filtered.length !== 1 ? 's' : ''} available`
+          : `${filtered.length} of ${allProducts.length} products`;
+        if (!filtered.length) {
+          grid.innerHTML = '<div class="shop-empty"><h3>No matches</h3><p>Try a different filter or search term.</p></div>';
+          return;
+        }
+        filtered.forEach(p => grid.appendChild(renderProductCard(p)));
+      }
+
+      async function loadProducts() {
+        const grid = document.getElementById('shopGrid');
+        grid.innerHTML = '<article class="card"><p>Loading inventory…</p></article>';
+        try {
+          const res = await fetch(appUrl('/api/store-products'));
+          if (!res.ok) throw new Error('Server error');
+          const data = await res.json();
+          allProducts = data.products || [];
+        } catch (e) {
+          grid.innerHTML = '<div class="shop-empty"><h3>Could not load inventory</h3><p>Please refresh the page.</p></div>';
+          return;
+        }
+        applyFilters();
+      }
+
+      document.querySelectorAll('.shop-filter').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.shop-filter').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeFilter = btn.dataset.filter;
+          applyFilters();
+        });
+      });
+
+      document.getElementById('shopSearch').addEventListener('input', e => {
+        searchTerm = e.target.value.trim();
+        applyFilters();
+      });
+
+      loadProducts();
+    })();
+  </script>
+</body>
+</html>

@@ -8,38 +8,82 @@
   <script src="../static/nav-auth.js" defer></script>
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
+<body class="storefront-page">
   <video class="background-video" autoplay loop muted playsinline preload="auto">
     <source src="/static/whalebackground.mp4" type="video/mp4">
   </video>
   <div class="page-frame">
-    <header class="site-header">
-      <a class="site-brand" href="/">
-        <img class="site-logo" src="/static/newblackwhale.png" alt="The Black Whale logo">
-        <span>The Black Whale</span>
-      </a>
-      <nav class="site-nav">
-        <a href="/inventory">Inventory</a>
-        <a href="/seller">Seller</a>
-        <a href="/sign-in">Sign In</a>
-      </nav>
+    <header class="site-header storefront-header">
+      <div class="storefront-nav-shell">
+        <a class="site-brand" href="/">
+          <img class="site-logo" src="/static/newblackwhale.png" alt="The Black Whale logo">
+          <span>The Black Whale</span>
+        </a>
+        <div class="storefront-nav-group">
+          <p class="storefront-nav-note">Commercial live bait, cut bait, and premium seafood supply from trusted coastal vendors.</p>
+          <nav class="site-nav">
+          </nav>
+        </div>
+      </div>
     </header>
     <main class="page-shell">
-      <section class="panel hero">
-        <div>
+      <section class="panel hero storefront-hero">
+        <div class="storefront-hero-content">
+          <p class="storefront-eyebrow">Live and Cut Bait Supply</p>
           <h1 class="section-title">Welcome to The Black Whale</h1>
-          <p class="section-copy"></p>
-          <div class="hero-actions">
-            <a class="button button-primary" href="#products">Browse Products</a>
-            <a class="button button-secondary" href="/about">Learn More</a>
-          </div>
+          <p class="section-copy">Fresh live bait, fresh-cut bait, and premium seafood listed daily for charters, retailers, and kitchen teams.</p>
+          <p class="storefront-kicker">Source inventory for offshore trips and service programs with transparent handling notes, cold-chain dispatch windows, and consistent supply visibility.</p>
+        </div>
+        <div class="storefront-showcase">
+          <article class="showcase-main">
+            <img src="https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?auto=format&fit=crop&w=1200&q=80" alt="Live premium seafood in holding tank">
+            <div class="showcase-caption">
+              <span>Live Bait Inventory</span>
+              <strong>Tank-Managed Selection</strong>
+            </div>
+          </article>
+          <article class="showcase-mini">
+            <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=1200&q=80" alt="Fresh raw tuna meat cut">
+            <div class="showcase-caption">
+              <span>Fresh-Cut Bait and Meat</span>
+              <strong>Prepared for Daily Dispatch</strong>
+            </div>
+          </article>
         </div>
       </section>
 
-      <section class="panel" id="products">
-        <div>
-          <h2 class="section-title">Featured Fish</h2>
-          <p class="section-copy">Each listing opens its own product page with seller info, delivery estimate, and nutrition facts.</p>
+      <section class="storefront-journey" aria-label="How it works">
+        <article class="journey-step">
+          <span>01</span>
+          <h3>Select Live or Cut Inventory</h3>
+          <p>Choose bait species, fresh-cut options, and seafood lots based on your daily demand.</p>
+        </article>
+        <article class="journey-step">
+          <span>02</span>
+          <h3>Confirm Handling and Dispatch</h3>
+          <p>Each listing includes holding details, prep notes, and the next available shipping window.</p>
+        </article>
+        <article class="journey-step">
+          <span>03</span>
+          <h3>Track Through Delivery</h3>
+          <p>Follow status from order confirmation to dockside or doorstep delivery.</p>
+        </article>
+      </section>
+
+      <section class="panel storefront-products" id="products">
+        <div class="storefront-products-head">
+          <div>
+            <h2 class="section-title">Live Bait, Cut Bait, and Premium Seafood</h2>
+            <p class="section-copy">Browse live bait systems, fresh-cut bait inventory, and seafood meat cuts with real-time handling and delivery details.</p>
+          </div>
+          <div class="storefront-toolbar">
+            <div class="storefront-filter-group" role="tablist" aria-label="Filter products">
+              <button class="storefront-filter active" data-filter="all" type="button">All</button>
+              <button class="storefront-filter" data-filter="live" type="button">Live Catches</button>
+              <button class="storefront-filter" data-filter="cut" type="button">Premium Cuts</button>
+            </div>
+            <input id="storeSearch" class="storefront-search" type="search" placeholder="Search bait species, cuts, or seafood..." aria-label="Search products">
+          </div>
         </div>
         <div id="productGrid" class="grid"></div>
       </section>
@@ -52,6 +96,9 @@
   <script>
     (function() {
       const overlay = document.querySelector('.page-transition-overlay');
+      let activeFilter = 'all';
+      let searchTerm = '';
+      let storeProducts = [];
       const internalLinks = Array.from(document.querySelectorAll('a[href]')).filter(link => {
         const href = link.getAttribute('href');
         return href && href.endsWith('.html') && !href.startsWith('http') && !href.startsWith('#');
@@ -77,16 +124,25 @@
 
       function renderProductCard(product) {
         const card = document.createElement('article');
-        card.className = 'card';
+        card.className = 'card product-card';
         const cardId = `product-${product.product_id}`;
+        const isLive = /live|lobster|crab|eel|grouper/i.test(String(product.title || '') + ' ' + String(product.description || ''));
+        const kindLabel = isLive ? 'Live Catch' : 'Premium Cut';
+        const kindClass = isLive ? 'live' : '';
         card.innerHTML = `
-          <img src="${product.image_url || '/static/newblackwhale.png'}" alt="${product.title}" style="width:100%;height:180px;object-fit:cover;border-radius:12px;margin-bottom:12px;">
-          <h3>${product.title}</h3>
-          <p>${product.description}</p>
-          <p><strong>Price:</strong> $${Number(product.price).toFixed(2)}</p>
-          <div style="display:flex;gap:8px;margin-top:12px;">
-            <a class="button button-primary" href="${appUrl('/product/' + product.product_id)}" style="flex:1;text-align:center;">View Fish</a>
-            <button class="button button-secondary quick-add-btn" data-product-id="${product.product_id}" style="flex:1;" id="${cardId}-btn">+ Cart</button>
+          <img class="card-image" src="${product.image_url || '/static/newblackwhale.png'}" alt="${product.title}">
+          <div class="product-card-body">
+            <h3>${product.title}</h3>
+            <div class="product-meta">
+              <span class="product-kind ${kindClass}">${kindLabel}</span>
+              <p class="product-price">$${Number(product.price).toFixed(2)}</p>
+            </div>
+            <p class="product-desc">${product.description}</p>
+            <p class="product-subline">${product.estimated_delivery || '3-7 days'} · ${Number(product.inventory || 0)} units</p>
+            <div class="product-actions">
+              <a class="button button-primary" href="${appUrl('/product/' + product.product_id)}" style="text-align:center;">View Product</a>
+              <button class="button button-secondary quick-add-btn" data-product-id="${product.product_id}" id="${cardId}-btn">+ Cart</button>
+            </div>
           </div>
         `;
         const btn = card.querySelector('.quick-add-btn');
@@ -132,33 +188,75 @@
         const fallbackProducts = [
           {
             product_id: 1,
-            title: 'Atlantic Salmon Fillet',
-            description: 'Fresh-cut salmon fillet with rich flavor and smooth texture.',
-            price: 18.99,
-            image_url: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=1200&q=80'
+            title: 'Live Spiny Lobster',
+            description: 'Tank-kept spiny lobster selected on order for premium live delivery.',
+            price: 64.9,
+            image_url: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?auto=format&fit=crop&w=1200&q=80'
           },
           {
             product_id: 2,
-            title: 'Yellowfin Tuna Steak',
-            description: 'Lean premium tuna steak with a firm bite, perfect for searing.',
-            price: 21.5,
-            image_url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=1200&q=80'
+            title: 'Yellowfin Tuna Loin Steak',
+            description: 'Sashimi-grade center-cut tuna loin with clean flavor and premium raw-meat texture.',
+            price: 29.5,
+            image_url: 'https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=1200&q=80'
           },
           {
             product_id: 3,
-            title: 'Whole Red Snapper',
-            description: 'Whole cleaned red snapper ideal for roasting with herbs and citrus.',
-            price: 26.0,
-            image_url: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=1200&q=80'
+            title: 'Live Mud Crab',
+            description: 'Hard-shell live mud crab packed oxygenated for short-haul freshness.',
+            price: 42.0,
+            image_url: 'https://images.unsplash.com/photo-1618424181497-157f25b6ddd5?auto=format&fit=crop&w=1200&q=80'
           }
         ];
 
         function renderMany(products) {
           productGrid.innerHTML = '';
+          if (!products.length) {
+            productGrid.innerHTML = '<article class="card"><h3>No Matches</h3><p>Try adjusting your filter or search query.</p></article>';
+            return;
+          }
           products.forEach((product) => {
             productGrid.appendChild(renderProductCard(product));
           });
         }
+
+        function isLive(product) {
+          return /live|lobster|crab|eel|grouper/i.test(String(product.title || '') + ' ' + String(product.description || ''));
+        }
+
+        function applyViewFilters() {
+          let filtered = storeProducts.slice();
+          if (activeFilter === 'live') {
+            filtered = filtered.filter(isLive);
+          } else if (activeFilter === 'cut') {
+            filtered = filtered.filter((product) => !isLive(product));
+          }
+
+          if (searchTerm) {
+            const q = searchTerm.toLowerCase();
+            filtered = filtered.filter((product) =>
+              String(product.title || '').toLowerCase().includes(q) ||
+              String(product.description || '').toLowerCase().includes(q)
+            );
+          }
+
+          renderMany(filtered);
+        }
+
+        document.querySelectorAll('.storefront-filter').forEach((button) => {
+          button.addEventListener('click', () => {
+            activeFilter = button.dataset.filter || 'all';
+            document.querySelectorAll('.storefront-filter').forEach((b) => b.classList.remove('active'));
+            button.classList.add('active');
+            applyViewFilters();
+          });
+        });
+
+        const searchInput = document.getElementById('storeSearch');
+        searchInput.addEventListener('input', () => {
+          searchTerm = searchInput.value.trim();
+          applyViewFilters();
+        });
 
         try {
           const response = await fetch(appUrl('/api/store-products'));
@@ -168,13 +266,16 @@
           const data = await response.json();
 
           if (!data.success || !Array.isArray(data.products) || data.products.length === 0) {
-            renderMany(fallbackProducts);
+            storeProducts = fallbackProducts;
+            applyViewFilters();
             return;
           }
 
-          renderMany(data.products);
+          storeProducts = data.products;
+          applyViewFilters();
         } catch (error) {
-          renderMany(fallbackProducts);
+          storeProducts = fallbackProducts;
+          applyViewFilters();
         }
       }
 
